@@ -1,5 +1,6 @@
 language: php
 sudo: required
+dist: xenial
 
 cache:
     directories:
@@ -19,7 +20,7 @@ before_script:
 - sudo apt-get update
 - sudo apt-get install libcouchbase-dev build-essential php-pear php7.0-dev zlib1g-dev
 - sudo pecl install couchbase
-- echo "extension=couchbase.so" >> /etc/php/7.0/apache2/php.ini
+- echo "extension=couchbase.so" >> `php --ini | grep "Loaded Configuration" | sed -e "s|.*:\s*||"`
 - composer install
 
 script:

@@ -1,5 +1,6 @@
 [![Minimum PHP Version](https://img.shields.io/badge/php-%3E%3D%207.0-blue.svg?no-cache=1)](https://php.net/)
 [![Build Status](https://travis-ci.org/BowlOfSoup/couchbase-access-layer.svg?branch=master)](https://travis-ci.org/BowlOfSoup/couchbase-access-layer)
+[![Coverage Status](https://coveralls.io/repos/github/BowlOfSoup/couchbase-access-layer/badge.svg?branch=master)](https://coveralls.io/github/BowlOfSoup/couchbase-access-layer?branch=master)
 
 Installation
 ------------
