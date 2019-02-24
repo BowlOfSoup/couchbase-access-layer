@@ -4,10 +4,11 @@
   "license": "MIT",
   "require": {
     "ext-couchbase": "*",
+    "ext-json": "*",
     "php": ">=7.0"
   },
   "require-dev": {
-    "phpunit/phpunit": "^6.5"
+    "phpunit/phpunit": "6.5.*"
   },
   "autoload": {
     "psr-4": { "BowlOfSoup\\CouchbaseAccessLayer\\": "src" }
