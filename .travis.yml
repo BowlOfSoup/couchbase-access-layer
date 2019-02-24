@@ -1,5 +1,5 @@
 language: php
-sudo: true
+sudo: required
 
 cache:
     directories:
@@ -14,6 +14,12 @@ matrix:
     fast_finish: true
 
 before_script:
+- wget http://packages.couchbase.com/releases/couchbase-release/couchbase-release-1.0-4-amd64.deb
+- sudo dpkg -i couchbase-release-1.0-4-amd64.deb
+- sudo apt-get update
+- sudo apt-get install libcouchbase-dev build-essential php-dev zlib1g-dev
+- sudo pecl install couchbase
+- echo "extension=couchbase.so" >> /etc/php/7.0/apache2/php.ini
 - composer install
 
 script:
