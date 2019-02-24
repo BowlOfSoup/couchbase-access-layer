@@ -2,10 +2,15 @@
   "name": "bowlofsoup/couchbase-access-layer",
   "description": "A simple Couchbase query builder.",
   "license": "MIT",
+  "config": {
+    "platform": {
+      "php": "7.0"
+    }
+  },
   "require": {
     "ext-couchbase": "*",
     "ext-json": "*",
-    "php": ">=7.0"
+    "php": "^7.0"
   },
   "require-dev": {
     "phpunit/phpunit": "6.5.*"
