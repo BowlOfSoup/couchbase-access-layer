@@ -1,0 +1,27 @@
+language: php
+sudo: true
+
+cache:
+    directories:
+    - $HOME/.composer/cache
+
+matrix:
+    include:
+    - php: 7.0
+    - php: 7.1
+    - php: 7.2
+    - php: 7.3
+    fast_finish: true
+
+before_script:
+- composer install
+
+script:
+- mkdir -p tests/coverage
+- vendor/bin/phpunit
+
+after_script:
+- php vendor/bin/coveralls -v
+
+before_install:
+- echo "memory_limit=2048M" >> ~/.phpenv/versions/$(phpenv version-name)/etc/conf.d/travis.ini
