@@ -99,11 +99,27 @@ class BucketRepositoryTest extends CouchbaseTestCase
         $this->assertSame([], $bucketRepository->executeQuery('someQuery', ['some' => 'parameters']));
     }
 
-    public function testExecuteAQueryWithSingleValueResult()
+    public function testExecuteAQueryWithASingleValueAndNoRowSyntaxInTheQueryResult()
     {
         $bucketMock = $this->createBucketMock(
             $this->returnCallback(function () {
                 return 'foo';
+            })
+        );
+
+        $bucketRepository = $this->replaceBucketOnBucketRepositoryMock($bucketMock);
+
+        $this->assertSame(['foo'], $bucketRepository->executeQuery('someQuery', ['some' => 'parameters']));
+    }
+
+    public function testExecuteAQueryWithASingleValue()
+    {
+        $bucketMock = $this->createBucketMock(
+            $this->returnCallback(function () {
+                $result = new \stdClass;
+                $result->rows = 'foo';
+
+                return $result;
             })
         );
 
@@ -159,6 +175,25 @@ class BucketRepositoryTest extends CouchbaseTestCase
         );
     }
 
+    public function testExecuteAQueryAndReturnOnlyTheFirstResult()
+    {
+        $bucketMock = $this->createBucketMock(
+            $this->returnCallback(function () {
+                $result = new \stdClass;
+                $result->rows = [
+                    ['foo'],
+                    ['bar'],
+                ];
+
+                return $result;
+            })
+        );
+
+        $bucketRepository = $this->replaceBucketOnBucketRepositoryMock($bucketMock);
+
+        $this->assertSame('foo', $bucketRepository->executeQueryWithOneResult('someQuery', ['some' => 'parameters']));
+    }
+
     public function testExecuteAQueryWithResultIncludingBucketName()
     {
         $bucketMock = $this->createBucketMock(
@@ -197,7 +232,7 @@ class BucketRepositoryTest extends CouchbaseTestCase
         $this->assertInstanceOf(QueryBuilder::class, $queryBuilder);
     }
 
-    public function testGetQueryResultInResultModel()
+    public function testGetAResultInAResultModelConsistingOfMultipleDocuments()
     {
         $queryBuilder = $this->bucketRepository->createQueryBuilder();
 
@@ -259,7 +294,7 @@ class BucketRepositoryTest extends CouchbaseTestCase
         }
     }
 
-    public function testExecuteAQueryWithSingleNonArrayResult()
+    public function testGetAResultWithANonArrayResult()
     {
         $queryBuilder = $this->bucketRepository->createQueryBuilder();
 
@@ -283,7 +318,34 @@ class BucketRepositoryTest extends CouchbaseTestCase
         }
     }
 
-    public function testGetQueryResultWithoutResultModel()
+    public function testGetAResultWithASingleValueInARowSyntax()
+    {
+        $queryBuilder = $this->bucketRepository->createQueryBuilder();
+
+        $bucketMock = $this->createBucketMock(
+            $this->returnCallback(function () {
+                $result = new \stdClass;
+                $result->rows = 'foo';
+
+                return $result;
+            })
+        );
+
+        $bucketRepository = $this->replaceBucketOnBucketRepositoryMock($bucketMock);
+
+        try {
+            $result = $bucketRepository->getResult($queryBuilder);
+
+            $this->assertInstanceOf(Result::class, $result);
+            $this->assertSame(1, $result->getCount());
+            $this->assertSame(1, $result->getTotalCount());
+            $this->assertSame(['foo'], $result->get());
+        } catch (CouchbaseQueryException $e) {
+            trigger_error($e->getMessage(), E_USER_ERROR);
+        }
+    }
+
+    public function testGetQueryResultAsArray()
     {
         $queryBuilder = $this->bucketRepository->createQueryBuilder();
 

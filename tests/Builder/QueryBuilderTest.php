@@ -32,14 +32,16 @@ class QueryBuilderTest extends CouchbaseTestCase
             ->where('data.foo > $dataFoo')
             ->setParameter('dataFoo', 'bar');
 
-        $queryBuilder->orderBy('data.someOrderingField', Query::ORDER_DESC);
-        $queryBuilder->limit(10);
-        $queryBuilder->offset(5);
+        $queryBuilder
+            ->groupBy('someField')
+            ->orderBy('data.someOrderingField', Query::ORDER_DESC)
+            ->limit(10)
+            ->offset(5);
 
         $queryBuilder->select('someField');
 
         $this->assertSame(
-            'SELECT someField FROM `default` WHERE someField = $someField AND anotherValue = $anotherValue AND type = $type AND data.foo > $dataFoo ORDER BY data.someOrderingField DESC LIMIT 10 OFFSET 5',
+            'SELECT someField FROM `default` WHERE someField = $someField AND anotherValue = $anotherValue AND type = $type AND data.foo > $dataFoo GROUP BY someField ORDER BY data.someOrderingField DESC LIMIT 10 OFFSET 5',
             $queryBuilder->getQuery()
         );
         $this->assertSame([

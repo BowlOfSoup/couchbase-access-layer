@@ -12,7 +12,7 @@ Couchbase Access Layer
 A **simple** layer on top of the PHP Couchbase SDK which can help you to:
 - Quickly setup a Couchbase connection.
 - A handy to use BucketRepository to quickly query a **single** bucket.
-- Create queries with a so called 'Query Builder', this helps you build maintainable and easy to read N1ql queries.
+- Create queries with a so called 'Query Builder', this helps you build maintainable and easy to read N1ql queries and prevent injections.
 - Processes the differences in result syntax you can get back from Couchbase into a consistent query result.
 
 Usage

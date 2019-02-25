@@ -146,6 +146,14 @@ class Result implements \Iterator, \ArrayAccess, \Countable, \JsonSerializable
     }
 
     /**
+     * @return mixed
+     */
+    public function getFirstResult()
+    {
+        return reset($this->container);
+    }
+
+    /**
      * @return int
      */
     public function count()

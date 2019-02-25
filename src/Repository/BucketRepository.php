@@ -86,6 +86,21 @@ class BucketRepository
     }
 
     /**
+     * Input a query string and query parameters, get single, or first result.
+     *
+     * @param string $query
+     * @param array $params
+     *
+     * @return mixed
+     */
+    public function executeQueryWithOneResult(string $query, array $params = [])
+    {
+        $result = $this->executeQuery($query, $params);
+
+        return reset($result);
+    }
+
+    /**
      * @return \BowlOfSoup\CouchbaseAccessLayer\Builder\QueryBuilder
      */
     public function createQueryBuilder(): QueryBuilder
@@ -165,9 +180,9 @@ class BucketRepository
      *
      * This strips out the bucket name from the result set and makes it consistent.
      *
-     * @return array|string
+     * @return array
      */
-    private function extractQueryResult($rawQueryResult)
+    private function extractQueryResult($rawQueryResult): array
     {
         if (null === $rawQueryResult) {
             return [];
@@ -177,12 +192,12 @@ class BucketRepository
             return [$rawQueryResult];
         }
 
+        if (!is_array($rawQueryResult->rows)) {
+            return [$rawQueryResult->rows];
+        }
+
         return array_map(
             function ($row) {
-                if (!is_array($row) || $row instanceof \Countable) {
-                    return $row;
-                }
-
                 if (1 === count($row)) {
                     return reset($row);
                 }
