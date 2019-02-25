@@ -9,11 +9,14 @@ Installation
 Couchbase Access Layer
 ======================
 
-A **simple** layer on top of the PHP Couchbase SDK which can help you to:
+A **simple** layer on top of the PHP Couchbase SDK. Basically you get a _bucket_ repository class which acts as a layer between your code and Couchbase.
+
+The repository helps you to:
 - Quickly setup a Couchbase connection.
 - A handy to use BucketRepository to quickly query a **single** bucket.
-- Create queries with a so called 'Query Builder', this helps you build maintainable and easy to read N1ql queries.
+- Create queries with a so called '**query builder**', this helps you build maintainable and easy to read N1ql queries.
 - Processes the differences in result syntax you can get back from Couchbase into a consistent query result.
+- See below for more examples!
 
 Usage
 -----
@@ -35,7 +38,7 @@ Correct:
 
 This will prevent injection.
 
-#### Supports the following N1QL clauses
+#### The query builder supports the following N1QL clauses
 
 - `SELECT` with optional `DISTINCT` and `RAW`
 - `FROM` with optional alias, subquery also implemented (= mandatory alias)
