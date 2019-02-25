@@ -18,7 +18,7 @@ A **simple** layer on top of the PHP Couchbase SDK which can help you to:
 Usage
 -----
 
-####Use Parameters
+#### Use Parameters
 
 Important: When building a query, always try to use parameters.
 
@@ -35,7 +35,7 @@ Correct:
 
 This will prevent injection.
 
-####Supports the following N1QL clauses
+#### Supports the following N1QL clauses
 
 - `SELECT` with optional `DISTINCT` and `RAW`
 - `FROM` with optional alias, subquery also implemented (= mandatory alias)
@@ -48,7 +48,7 @@ This will prevent injection.
 
 Documentation for clauses can be found [On the Couchbase site](https://docs.couchbase.com/server/6.0/n1ql/n1ql-language-reference/selectintro.html).
 
-####Example
+#### Example
 
     <?php
 
