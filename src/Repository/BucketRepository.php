@@ -8,6 +8,7 @@ use BowlOfSoup\CouchbaseAccessLayer\Builder\QueryBuilder;
 use BowlOfSoup\CouchbaseAccessLayer\Factory\ClusterFactory;
 use BowlOfSoup\CouchbaseAccessLayer\Model\Result;
 use Couchbase\Bucket;
+use Couchbase\Exception as CouchbaseException;
 use Couchbase\N1qlQuery;
 
 /**
@@ -65,6 +66,36 @@ class BucketRepository
     public function getByKey($key): array
     {
         return json_decode(json_encode($this->bucket->get($key)->value), true);
+    }
+
+    /**
+     * @param string|array $ids
+     * @param mixed $value
+     * @param array $options
+     *
+     * @return \Couchbase\Document|array
+     */
+    public function upsert($ids, $value, array $options = [])
+    {
+        return $this->bucket->upsert($ids, $value, $options);
+    }
+
+    /**
+     * @param string $id
+     *
+     * @throws \Couchbase\Exception
+     */
+    public function remove(string $id)
+    {
+        try {
+            $this->bucket->remove($id);
+        } catch(CouchbaseException $exception) {
+            if ($exception->getCode() === COUCHBASE_KEY_ENOENT) {
+                // Document does not exist; No need to throw error.
+            } else {
+                throw $exception;
+            }
+        }
     }
 
     /**

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace BowlOfSoup\CouchbaseAccessLayer\Model;
 
+use BowlOfSoup\CouchbaseAccessLayer\Builder\QueryBuilder;
 use BowlOfSoup\CouchbaseAccessLayer\Exception\CouchbaseQueryException;
 
 class Query
@@ -14,8 +15,20 @@ class Query
     /** @var array */
     private $select = [];
 
+    /** @var bool */
+    private $distinct = false;
+
+    /** @var bool */
+    private $selectRaw = false;
+
     /** @var string */
     private $from;
+
+    /** @var array */
+    private $useKeys;
+
+    /** @var string */
+    private $useIndex;
 
     /** @var array */
     private $where = [];
@@ -37,22 +50,74 @@ class Query
 
     /**
      * @param string $select
+     * @param bool $distinct
      */
-    public function addSelect(string $select)
+    public function addSelect(string $select, bool $distinct)
     {
-        $this->select[] = $select;
+        $this->select[] = trim(sprintf('%s %s', true === $distinct ? 'DISTINCT ' : '', $select));
     }
 
     /**
-     * @param string $from
-     *
-     * @return \BowlOfSoup\CouchbaseAccessLayer\Model\Query
+     * @param bool $distinct
      */
-    public function setFrom(string $from): self
+    public function setDistinct(bool $distinct)
     {
-        $this->from = $from;
+        $this->distinct = $distinct;
+    }
 
-        return $this;
+    /**
+     * @param bool $selectRaw
+     */
+    public function setSelectRaw(bool $selectRaw)
+    {
+        $this->selectRaw = $selectRaw;
+    }
+
+    /**
+     * @param string|array $from
+     * @param string|null $alias
+     */
+    public function setFrom($from, $alias = null)
+    {
+        $from = is_array($from) ? $from : "`{$from}`";
+        $this->from = null !== $alias ? "{$from} {$alias}" : $from;
+    }
+
+    /**
+     * @param \BowlOfSoup\CouchbaseAccessLayer\Builder\QueryBuilder $queryBuilder
+     * @param string $alias
+     *
+     * @throws \BowlOfSoup\CouchbaseAccessLayer\Exception\CouchbaseQueryException
+     */
+    public function setFromWithSubQuery(QueryBuilder $queryBuilder, string $alias)
+    {
+        $this->from = "({$queryBuilder->getQuery()}) {$alias}";
+    }
+
+    /**
+     * @param string|array $keys
+     */
+    public function addUseKey($keys)
+    {
+        if (!is_array($keys)) {
+            $this->useKeys[] = $keys;
+
+            return;
+        }
+
+        if (!is_string($keys)) {
+            return;
+        }
+
+        $this->useKeys = $keys;
+    }
+
+    /**
+     * @param string $index
+     */
+    public function setUseIndex(string $index)
+    {
+        $this->useIndex = $index;
     }
 
     /**
@@ -107,19 +172,47 @@ class Query
      */
     public function build(): string
     {
+        if ($this->selectRaw && (count($this->select) > 1 || empty($this->select))) {
+            throw new CouchbaseQueryException("Can only use 'SELECT RAW' when exactly one property is selected.");
+        }
+
         $select = implode(', ', $this->select);
         if (empty($select)) {
             $select = '*';
         }
-
-        if (null === $this->from) {
-            throw new CouchbaseQueryException('Can\'t build N1QL query because of missing \'FROM\'.');
+        if ($this->selectRaw) {
+            if (strpos($select, 'DISTINCT') !== false) {
+                $select = str_replace('DISTINCT', 'DISTINCT RAW', $select);
+            } else {
+                $select = 'RAW ' . $select;
+            }
         }
 
-        $query = sprintf('SELECT %s FROM `%s` ', $select, $this->from);
+        if (null === $this->from) {
+            throw new CouchbaseQueryException("Can't build N1QL query because of missing 'FROM'.");
+        }
+
+        $query = sprintf('SELECT %s FROM %s ', $select, $this->from);
+
+        if (!empty($this->useIndex)) {
+            $query .= sprintf(' USE INDEX (%s USING GSI)'. $this->useIndex);
+        }
 
         if (!empty($this->where)) {
             $query .= 'WHERE ' . implode(' AND ', $this->where);
+        }
+
+        if (!empty($this->useKeys)) {
+            $useKeyString = '';
+            foreach ($this->useKeys as $useKey) {
+                $useKeyString .= sprintf('"%s", ', $useKey);
+            }
+            $useKeyString = rtrim($query, ', ');
+
+            $query .= sprintf(' USE KEYS [%s]'. $useKeyString);
+
+            // Using keys is the end of a query.
+            return $query;
         }
 
         if (!empty($this->groupBy)) {

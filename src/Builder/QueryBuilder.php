@@ -26,17 +26,68 @@ class QueryBuilder
     public function __construct(Bucket $bucket)
     {
         $this->bucket = $bucket;
-        $this->query = (new Query())->setFrom($bucket->getName());
+
+        $this->query = new Query();
+        $this->query->setFrom($bucket->getName());
     }
 
     /**
      * @param string $select
+     * @param bool $distinct
      *
      * @return \BowlOfSoup\CouchbaseAccessLayer\Builder\QueryBuilder
      */
-    public function select(string $select): self
+    public function select(string $select, bool $distinct = false): self
     {
-        $this->query->addSelect($select);
+        $this->query->addSelect($select, $distinct);
+
+        return $this;
+    }
+
+    /**
+     * @return \BowlOfSoup\CouchbaseAccessLayer\Builder\QueryBuilder
+     */
+    public function selectRaw(): self
+    {
+        $this->query->setSelectRaw(true);
+
+        return $this;
+    }
+
+    /**
+     * @return \BowlOfSoup\CouchbaseAccessLayer\Builder\QueryBuilder
+     */
+    public function distinct(): self
+    {
+        $this->query->setDistinct(true);
+
+        return $this;
+    }
+
+    /**
+     * @param string $from
+     * @param string|null $alias
+     *
+     * @return \BowlOfSoup\CouchbaseAccessLayer\Builder\QueryBuilder
+     */
+    public function from(string $from, string $alias = null): self
+    {
+        $this->query->setFrom($from, $alias);
+
+        return $this;
+    }
+
+    /**
+     * @param \BowlOfSoup\CouchbaseAccessLayer\Builder\QueryBuilder $queryBuilder
+     * @param string $alias
+     *
+     * @throws \BowlOfSoup\CouchbaseAccessLayer\Exception\CouchbaseQueryException
+     *
+     * @return \BowlOfSoup\CouchbaseAccessLayer\Builder\QueryBuilder
+     */
+    public function fromSubQuery(QueryBuilder $queryBuilder, string $alias): self
+    {
+        $this->query->setFromWithSubQuery($queryBuilder, $alias);
 
         return $this;
     }
@@ -98,6 +149,30 @@ class QueryBuilder
     public function offset($offset): self
     {
         $this->query->setOffset((int) $offset);
+
+        return $this;
+    }
+
+    /**
+     * @param string $index
+     *
+     * @return \BowlOfSoup\CouchbaseAccessLayer\Builder\QueryBuilder
+     */
+    public function useIndex(string $index): self
+    {
+        $this->query->setUseIndex($index);
+
+        return $this;
+    }
+
+    /**
+     * @param string|array $keys
+     *
+     * @return \BowlOfSoup\CouchbaseAccessLayer\Builder\QueryBuilder
+     */
+    public function useKey($keys): self
+    {
+        $this->query->addUseKey($keys);
 
         return $this;
     }
