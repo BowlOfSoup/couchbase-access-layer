@@ -28,7 +28,7 @@ script:
 - vendor/bin/phpunit
 
 after_script:
-- php vendor/bin/coveralls -v
+- php vendor/bin/php-coveralls -v
 
 before_install:
 - echo "memory_limit=2048M" >> ~/.phpenv/versions/$(phpenv version-name)/etc/conf.d/travis.ini
