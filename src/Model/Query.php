@@ -11,6 +11,7 @@ class Query
 {
     const ORDER_ASC = 'ASC';
     const ORDER_DESC = 'DESC';
+    const DISTINCT = true;
 
     /** @var array */
     private $select = [];
@@ -52,9 +53,9 @@ class Query
      * @param string $select
      * @param bool $distinct
      */
-    public function addSelect(string $select, bool $distinct)
+    public function addSelect(string $select, bool $distinct = false)
     {
-        $this->select[] = trim(sprintf('%s %s', true === $distinct ? 'DISTINCT ' : '', $select));
+        $this->select[] = trim(sprintf('%s %s', true === $distinct ? 'DISTINCT' : '', $select));
     }
 
     /**
@@ -74,12 +75,12 @@ class Query
     }
 
     /**
-     * @param string|array $from
+     * @param string $from
      * @param string|null $alias
      */
-    public function setFrom($from, $alias = null)
+    public function setFrom(string $from, $alias = null)
     {
-        $from = is_array($from) ? $from : "`{$from}`";
+        $from = "`{$from}`";
         $this->from = null !== $alias ? "{$from} {$alias}" : $from;
     }
 
@@ -95,21 +96,11 @@ class Query
     }
 
     /**
-     * @param string|array $keys
+     * @param string $key
      */
-    public function addUseKey($keys)
+    public function addUseKey(string $key)
     {
-        if (!is_array($keys)) {
-            $this->useKeys[] = $keys;
-
-            return;
-        }
-
-        if (!is_string($keys)) {
-            return;
-        }
-
-        $this->useKeys = $keys;
+        $this->useKeys[] = $key;
     }
 
     /**
@@ -195,7 +186,7 @@ class Query
         $query = sprintf('SELECT %s FROM %s ', $select, $this->from);
 
         if (!empty($this->useIndex)) {
-            $query .= sprintf(' USE INDEX (%s USING GSI)'. $this->useIndex);
+            $query .= sprintf('USE INDEX (%s USING GSI) ', $this->useIndex);
         }
 
         if (!empty($this->where)) {
@@ -207,12 +198,12 @@ class Query
             foreach ($this->useKeys as $useKey) {
                 $useKeyString .= sprintf('"%s", ', $useKey);
             }
-            $useKeyString = rtrim($query, ', ');
+            $useKeyString = rtrim($useKeyString, ', ');
 
-            $query .= sprintf(' USE KEYS [%s]'. $useKeyString);
+            $query .= sprintf('USE KEYS [%s]', $useKeyString);
 
             // Using keys is the end of a query.
-            return $query;
+            return trim($query);
         }
 
         if (!empty($this->groupBy)) {

@@ -5,14 +5,10 @@ declare(strict_types=1);
 namespace BowlOfSoup\CouchbaseAccessLayer\Builder;
 
 use BowlOfSoup\CouchbaseAccessLayer\Model\Query;
-use Couchbase\Bucket;
 
 class QueryBuilder
 {
     const RESULT_AS_ARRAY = true;
-
-    /** @var \Couchbase\Bucket */
-    private $bucket;
 
     /** @var \BowlOfSoup\CouchbaseAccessLayer\Model\Query */
     private $query;
@@ -21,14 +17,14 @@ class QueryBuilder
     private $parameters = [];
 
     /**
-     * @param \Couchbase\Bucket $bucket
+     * @param string|null $bucketName
      */
-    public function __construct(Bucket $bucket)
+    public function __construct(string $bucketName = null)
     {
-        $this->bucket = $bucket;
-
         $this->query = new Query();
-        $this->query->setFrom($bucket->getName());
+        if (null !== $bucketName) {
+            $this->query->setFrom($bucketName);
+        }
     }
 
     /**
@@ -45,11 +41,15 @@ class QueryBuilder
     }
 
     /**
+     * @param array $selects
+     *
      * @return \BowlOfSoup\CouchbaseAccessLayer\Builder\QueryBuilder
      */
-    public function selectRaw(): self
+    public function selectMultiple(array $selects): self
     {
-        $this->query->setSelectRaw(true);
+        foreach ($selects as $select) {
+            $this->query->addSelect($select);
+        }
 
         return $this;
     }
@@ -57,9 +57,9 @@ class QueryBuilder
     /**
      * @return \BowlOfSoup\CouchbaseAccessLayer\Builder\QueryBuilder
      */
-    public function distinct(): self
+    public function selectRaw(): self
     {
-        $this->query->setDistinct(true);
+        $this->query->setSelectRaw(true);
 
         return $this;
     }
@@ -78,6 +78,8 @@ class QueryBuilder
     }
 
     /**
+     * Because we can't get a parsed query (with parameters) the parameters for the sub query need to be on the 'master' query builder.
+     *
      * @param \BowlOfSoup\CouchbaseAccessLayer\Builder\QueryBuilder $queryBuilder
      * @param string $alias
      *
@@ -166,13 +168,27 @@ class QueryBuilder
     }
 
     /**
-     * @param string|array $keys
+     * @param string $key
      *
      * @return \BowlOfSoup\CouchbaseAccessLayer\Builder\QueryBuilder
      */
-    public function useKey($keys): self
+    public function useKey(string $key): self
     {
-        $this->query->addUseKey($keys);
+        $this->query->addUseKey($key);
+
+        return $this;
+    }
+
+    /**
+     * @param array $keys
+     *
+     * @return \BowlOfSoup\CouchbaseAccessLayer\Builder\QueryBuilder
+     */
+    public function useKeys(array $keys): self
+    {
+        foreach ($keys as $key) {
+            $this->query->addUseKey($key);
+        }
 
         return $this;
     }

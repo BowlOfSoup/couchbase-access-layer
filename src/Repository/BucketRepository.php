@@ -136,7 +136,7 @@ class BucketRepository
      */
     public function createQueryBuilder(): QueryBuilder
     {
-        return new QueryBuilder($this->bucket);
+        return new QueryBuilder($this->bucketName);
     }
 
     /**

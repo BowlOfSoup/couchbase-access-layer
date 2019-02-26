@@ -23,7 +23,7 @@
             <directory>src</directory>
             <exclude>
                 <directory>src/Exception</directory>
-                <directory>src/Model</directory>
+                <directory>src/Model/Result.php</directory>
             </exclude>
         </whitelist>
     </filter>
