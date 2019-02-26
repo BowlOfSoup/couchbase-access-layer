@@ -59,14 +59,6 @@ class Query
     }
 
     /**
-     * @param bool $distinct
-     */
-    public function setDistinct(bool $distinct)
-    {
-        $this->distinct = $distinct;
-    }
-
-    /**
      * @param bool $selectRaw
      */
     public function setSelectRaw(bool $selectRaw)
@@ -185,14 +177,6 @@ class Query
 
         $query = sprintf('SELECT %s FROM %s ', $select, $this->from);
 
-        if (!empty($this->useIndex)) {
-            $query .= sprintf('USE INDEX (%s USING GSI) ', $this->useIndex);
-        }
-
-        if (!empty($this->where)) {
-            $query .= 'WHERE ' . implode(' AND ', $this->where);
-        }
-
         if (!empty($this->useKeys)) {
             $useKeyString = '';
             foreach ($this->useKeys as $useKey) {
@@ -204,6 +188,14 @@ class Query
 
             // Using keys is the end of a query.
             return trim($query);
+        }
+
+        if (!empty($this->useIndex)) {
+            $query .= sprintf('USE INDEX (%s USING GSI) ', $this->useIndex);
+        }
+
+        if (!empty($this->where)) {
+            $query .= 'WHERE ' . implode(' AND ', $this->where);
         }
 
         if (!empty($this->groupBy)) {

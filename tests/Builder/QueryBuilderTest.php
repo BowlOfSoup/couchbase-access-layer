@@ -69,6 +69,23 @@ class QueryBuilderTest extends CouchbaseTestCase
     /**
      * @throws \BowlOfSoup\CouchbaseAccessLayer\Exception\CouchbaseQueryException
      */
+    public function testQueryWithRaw()
+    {
+        $queryBuilder = new QueryBuilder('default_bucket');
+
+        $queryBuilder
+            ->select('data.someField')
+            ->selectRaw();
+
+        $this->assertSame(
+            'SELECT RAW data.someField FROM `default_bucket`',
+            $queryBuilder->getQuery()
+        );
+    }
+
+    /**
+     * @throws \BowlOfSoup\CouchbaseAccessLayer\Exception\CouchbaseQueryException
+     */
     public function testQueryWithDistinctAndRawUsingAnIndex()
     {
         $queryBuilder = new QueryBuilder('default_bucket');
@@ -100,8 +117,10 @@ class QueryBuilderTest extends CouchbaseTestCase
             ->fromSubQuery($queryBuilderForSubSelect, 'q1')
             ->setParameter('foo', 'value1');
 
+        $queryBuilder->orderBy('q1.someFieldOfTheSubSelect');
+
         $this->assertSame(
-            'SELECT q1.someFieldOfTheSubSelect FROM (SELECT * FROM `possibly_some_other_bucket` WHERE type = $foo) q1',
+            'SELECT q1.someFieldOfTheSubSelect FROM (SELECT * FROM `possibly_some_other_bucket` WHERE type = $foo) q1  ORDER BY q1.someFieldOfTheSubSelect ASC',
             $queryBuilder->getQuery()
         );
     }

@@ -61,11 +61,15 @@ class BucketRepository
      *
      * @param string $key
      *
-     * @return array
+     * @return array|null
      */
-    public function getByKey($key): array
+    public function getByKey($key)
     {
-        return json_decode(json_encode($this->bucket->get($key)->value), true);
+        try {
+            return json_decode(json_encode($this->bucket->get($key)->value), true);
+        } catch (CouchbaseException $e) {
+            return null;
+        }
     }
 
     /**
