@@ -27,15 +27,17 @@ class BucketRepository
     /**
      * @param string $bucketName
      * @param \BowlOfSoup\CouchbaseAccessLayer\Factory\ClusterFactory $clusterFactory
+     * @param string $bucketPassword
      */
     public function __construct(
         string $bucketName,
-        ClusterFactory $clusterFactory
+        ClusterFactory $clusterFactory,
+        string $bucketPassword = ''
     ) {
         $this->bucketName = $bucketName;
 
         $cluster = $clusterFactory->create();
-        $this->bucket = $cluster->openBucket($bucketName, '');
+        $this->bucket = $cluster->openBucket($bucketName, $bucketPassword);
     }
 
     /**
