@@ -37,7 +37,13 @@ class BucketRepository
         $this->bucketName = $bucketName;
 
         $cluster = $clusterFactory->create();
-        $this->bucket = $cluster->openBucket($bucketName, $bucketPassword);
+        try {
+            $this->bucket = $cluster->openBucket($bucketName);
+        } catch (\ArgumentCountError $e) {
+            $this->bucket = $cluster->openBucket($bucketName, $bucketPassword);
+        } catch (CouchbaseException $e ) {
+            $this->bucket = $cluster->openBucket($bucketName, $bucketPassword);
+        }
     }
 
     /**
