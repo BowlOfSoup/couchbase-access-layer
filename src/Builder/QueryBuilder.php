@@ -107,6 +107,18 @@ class QueryBuilder
     }
 
     /**
+     * @param string $where
+     *
+     * @return \BowlOfSoup\CouchbaseAccessLayer\Builder\QueryBuilder
+     */
+    public function whereOr(string $where): self
+    {
+        $this->query->addWhereOr($where);
+
+        return $this;
+    }
+
+    /**
      * @param string $orderBy
      * @param string|null $direction
      *

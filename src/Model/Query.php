@@ -32,7 +32,10 @@ class Query
     private $useIndex;
 
     /** @var array */
-    private $where = [];
+    private $whereAnd = [];
+
+    /** @var array */
+    private $whereOr = [];
 
     /** @var array */
     private $orderBy = [];
@@ -108,7 +111,15 @@ class Query
      */
     public function addWhere(string $where)
     {
-        $this->where[] = $where;
+        $this->whereAnd[] = $where;
+    }
+
+    /**
+     * @param string $where
+     */
+    public function addWhereOr(string $where)
+    {
+        $this->whereOr[] = $where;
     }
 
     /**
@@ -194,8 +205,10 @@ class Query
             $query .= sprintf('USE INDEX (%s USING GSI) ', $this->useIndex);
         }
 
-        if (!empty($this->where)) {
-            $query .= 'WHERE ' . implode(' AND ', $this->where);
+        if (!empty($this->whereAnd) || !empty($this->whereOr)) {
+            $whereOrStatement = !empty($this->whereOr) ? ' OR ' : '';
+
+            $query .= 'WHERE ' . implode(' AND ', $this->whereAnd) . $whereOrStatement . implode(' OR ', $this->whereOr);
         }
 
         if (!empty($this->groupBy)) {

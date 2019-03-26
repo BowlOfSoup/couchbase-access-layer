@@ -56,6 +56,48 @@ class QueryBuilderTest extends CouchbaseTestCase
     /**
      * @throws \BowlOfSoup\CouchbaseAccessLayer\Exception\CouchbaseQueryException
      */
+    public function testGetQueryWithWhereOr()
+    {
+        $queryBuilder = new QueryBuilder('default_bucket');
+
+        $queryBuilder
+            ->where('someField = $someField')
+            ->whereOr('`key` IN [\'foo\', \'bar\']');
+
+        $queryBuilder->setParameters([
+            'someField' => '12346782',
+            'anotherValue' => 'ThisIsADocument',
+            'type' => 'SomeDifferentTypeOfDocument',
+        ]);
+
+        $queryBuilder
+            ->where('data.foo > $dataFoo')
+            ->setParameter('dataFoo', 'bar');
+
+        $queryBuilder
+            ->groupBy('someField')
+            ->orderBy('data.someOrderingField', Query::ORDER_DESC)
+            ->limit(10)
+            ->offset(5);
+
+        $queryBuilder->select('someField');
+        $queryBuilder->selectMultiple(['foo', 'COUNT(bar) AS bar_counted']);
+
+        $this->assertSame(
+            'SELECT someField, foo, COUNT(bar) AS bar_counted FROM `default_bucket` WHERE someField = $someField AND data.foo > $dataFoo OR `key` IN [\'foo\', \'bar\'] GROUP BY someField ORDER BY data.someOrderingField DESC LIMIT 10 OFFSET 5',
+            $queryBuilder->getQuery()
+        );
+        $this->assertSame([
+            'someField' => '12346782',
+            'anotherValue' => 'ThisIsADocument',
+            'type' => 'SomeDifferentTypeOfDocument',
+            'dataFoo' => 'bar',
+        ], $queryBuilder->getParameters());
+    }
+
+    /**
+     * @throws \BowlOfSoup\CouchbaseAccessLayer\Exception\CouchbaseQueryException
+     */
     public function testGetQuerySelectAll()
     {
         $queryBuilder = new QueryBuilder('default_bucket');
