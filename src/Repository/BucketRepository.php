@@ -9,6 +9,7 @@ use BowlOfSoup\CouchbaseAccessLayer\Factory\ClusterFactory;
 use BowlOfSoup\CouchbaseAccessLayer\Model\Result;
 use Couchbase\Bucket;
 use Couchbase\Exception as CouchbaseException;
+use Couchbase\MutationState;
 use Couchbase\N1qlQuery;
 
 /**
@@ -88,6 +89,36 @@ class BucketRepository
     public function upsert($ids, $value, array $options = [])
     {
         return $this->bucket->upsert($ids, $value, $options);
+    }
+
+    /**
+     * @param $ids
+     * @param $value
+     * @param array $consistentWhereParameters
+     * @param array $options
+     *
+     * @throws \BowlOfSoup\CouchbaseAccessLayer\Exception\CouchbaseQueryException
+     *
+     * @return array
+     */
+    public function upsertConsistent($ids, $value, array $consistentWhereParameters, array $options = [])
+    {
+        $result = $this->upsert($ids, $value, $options);
+
+        $mutationState = MutationState::from($result);
+
+        $queryBuilder = $this->createQueryBuilder();
+        foreach ($consistentWhereParameters as $property => $consistentWhereParameter) {
+            $queryBuilder->where("{$property} = ${$property}");
+            $queryBuilder->setParameter($property, $consistentWhereParameter);
+        }
+
+        $query = $this->getN1qlQuery($queryBuilder);
+        $query->consistentWith($mutationState);
+
+        $result = $this->bucket->query($query, static::RESULT_AS_ARRAY);
+
+        return $this->extractQueryResult($result);
     }
 
     /**
@@ -208,12 +239,26 @@ class BucketRepository
      */
     public function getResultUnprocessed(QueryBuilder $queryBuilder)
     {
+        $query = $this->getN1qlQuery($queryBuilder);
+
+        return $this->bucket->query($query, static::RESULT_AS_ARRAY);
+    }
+
+    /**
+     * @param \BowlOfSoup\CouchbaseAccessLayer\Builder\QueryBuilder $queryBuilder
+     *
+     * @throws \BowlOfSoup\CouchbaseAccessLayer\Exception\CouchbaseQueryException
+     *
+     * @return \Couchbase\N1qlQuery
+     */
+    private function getN1qlQuery(QueryBuilder $queryBuilder): N1qlQuery
+    {
         $queryString = $queryBuilder->getQuery();
 
         $query = N1qlQuery::fromString($queryString);
         $query->namedParams($queryBuilder->getParameters());
 
-        return $this->bucket->query($query, static::RESULT_AS_ARRAY);
+        return $query;
     }
 
     /**
