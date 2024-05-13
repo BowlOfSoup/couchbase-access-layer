@@ -4,22 +4,23 @@
   "license": "MIT",
   "config": {
     "platform": {
-      "php": "7.0"
+      "php": "8.3"
     }
   },
   "require": {
     "ext-couchbase": "*",
     "ext-json": "*",
-    "php": "^7.0"
-  },
-  "require-dev": {
-    "phpunit/phpunit": "6.5.*",
-    "php-coveralls/php-coveralls": "^2.1"
+    "php": "^8.3",
+    "couchbase/couchbase": "^4.2"
   },
   "autoload": {
     "psr-4": { "BowlOfSoup\\CouchbaseAccessLayer\\": "src" }
   },
   "autoload-dev": {
     "psr-4": { "BowlOfSoup\\CouchbaseAccessLayer\\Test\\": "tests" }
+  },
+  "require-dev": {
+    "php-coveralls/php-coveralls": "^2.7",
+    "phpunit/phpunit": "^11"
   }
 }
