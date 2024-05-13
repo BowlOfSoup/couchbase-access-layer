@@ -58,7 +58,7 @@ abstract class CouchbaseTestCase extends TestCase
         $this->testAdminUser = 'Administrator';
         $this->testAdminPassword = 'password';
         $this->testUser = 'default';
-        $this->testPassword = 'test';
+        $this->testPassword = '';
 
         $this->testAuthenticator = new PasswordAuthenticator($this->testUser, $this->testPassword);
     }
