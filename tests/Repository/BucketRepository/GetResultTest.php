@@ -9,7 +9,7 @@ use BowlOfSoup\CouchbaseAccessLayer\Model\Result;
 
 class GetResultTest extends AbstractTest
 {
-    public function testGetAResultInAResultModelConsistingOfMultipleDocuments()
+    public function testGetAResultInAResultModelConsistingOfMultipleDocuments(): void
     {
         $queryBuilder = $this->bucketRepository->createQueryBuilder();
 
@@ -71,7 +71,7 @@ class GetResultTest extends AbstractTest
         }
     }
 
-    public function testGetAResultWithANonArrayResult()
+    public function testGetAResultWithANonArrayResult(): void
     {
         $queryBuilder = $this->bucketRepository->createQueryBuilder();
 
@@ -95,7 +95,7 @@ class GetResultTest extends AbstractTest
         }
     }
 
-    public function testGetAResultWithASingleValueInARowSyntax()
+    public function testGetAResultWithASingleValueInARowSyntax(): void
     {
         $queryBuilder = $this->bucketRepository->createQueryBuilder();
 
@@ -122,7 +122,7 @@ class GetResultTest extends AbstractTest
         }
     }
 
-    public function testGetQueryResultAsArray()
+    public function testGetQueryResultAsArray(): void
     {
         $queryBuilder = $this->bucketRepository->createQueryBuilder();
 

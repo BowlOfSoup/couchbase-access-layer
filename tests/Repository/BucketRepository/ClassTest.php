@@ -13,17 +13,17 @@ use Couchbase\Exception as CouchbaseException;
  */
 class ClassTest extends AbstractTest
 {
-    public function testGetBucket()
+    public function testGetBucket(): void
     {
         $this->assertInstanceOf(Bucket::class, $this->bucketRepository->getBucket());
     }
 
-    public function testGetBucketName()
+    public function testGetBucketName(): void
     {
         $this->assertSame('default', $this->bucketRepository->getBucketName());
     }
 
-    public function testGetDocumentByKey()
+    public function testGetDocumentByKey(): void
     {
         $id = uniqid();
         $value = ['someData' => 'test123', 'foo' => ['somethingsomething']];
@@ -33,20 +33,20 @@ class ClassTest extends AbstractTest
         $this->assertSame($value, $this->bucketRepository->getByKey($id));
     }
 
-    public function testGetDocumentByKeyButDocumentDoesNotExist()
+    public function testGetDocumentByKeyButDocumentDoesNotExist(): void
     {
         $this->assertNull($this->bucketRepository->getByKey('123'));
     }
 
 
-    public function testGetAnInstanceOfQueryBuilder()
+    public function testGetAnInstanceOfQueryBuilder(): void
     {
         $queryBuilder = $this->bucketRepository->createQueryBuilder();
 
         $this->assertInstanceOf(QueryBuilder::class, $queryBuilder);
     }
 
-    public function testUpsertADocument()
+    public function testUpsertADocument(): void
     {
         $id = uniqid();
         $value = ['someData' => 'test123', 'foo' => ['somethingsomething']];
@@ -59,7 +59,7 @@ class ClassTest extends AbstractTest
     /**
      * @throws \Couchbase\Exception
      */
-    public function testRemoveADocument()
+    public function testRemoveADocument(): void
     {
         $id = uniqid();
         $value = ['someData' => 'test123', 'foo' => ['somethingsomething']];
@@ -74,19 +74,19 @@ class ClassTest extends AbstractTest
     /**
      * @throws \Couchbase\Exception
      */
-    public function testRemoveADocumentWhichDoesNotExist()
+    public function testRemoveADocumentWhichDoesNotExist(): void
     {
         $this->bucketRepository->remove('123');
     }
 
     /**
      * @throws \Couchbase\Exception
-     *
-     * @expectedException \Couchbase\Exception
-     * @expectedExceptionMessage foo
      */
-    public function testRemoveADocumentSomeExceptionThrown()
+    public function testRemoveADocumentSomeExceptionThrown(): void
     {
+        $this->expectException(\Couchbase\Exception::class);
+        $this->$this->expectExceptionMessage('foo');
+
         $bucketMock = $this->getMockBuilder(\stdClass::class)->setMethods(['remove'])->getMock();
         $bucketMock
             ->expects($this->once())

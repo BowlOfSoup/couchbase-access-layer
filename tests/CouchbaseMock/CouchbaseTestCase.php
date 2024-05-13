@@ -7,6 +7,7 @@ namespace BowlOfSoup\CouchbaseAccessLayer\Test\CouchbaseMock;
 use Couchbase\Bucket;
 use Couchbase\ClassicAuthenticator;
 use Couchbase\Cluster;
+use Couchbase\ClusterOptions;
 use Couchbase\PasswordAuthenticator;
 use PHPUnit\Framework\TestCase;
 
@@ -45,7 +46,7 @@ abstract class CouchbaseTestCase extends TestCase
     /**
      * @throws \Exception
      */
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->mock = new CouchbaseMock();
         $this->mock->start();
@@ -57,18 +58,12 @@ abstract class CouchbaseTestCase extends TestCase
         $this->testAdminUser = 'Administrator';
         $this->testAdminPassword = 'password';
         $this->testUser = 'default';
-        $this->testPassword = '';
+        $this->testPassword = 'test';
 
-        if ($this->serverVersion() >= 5.0) {
-            $this->testAuthenticator = new PasswordAuthenticator();
-            $this->testAuthenticator->username($this->testUser)->password($this->testPassword);
-        } else {
-            $this->testAuthenticator = new ClassicAuthenticator();
-            $this->testAuthenticator->bucket($this->testBucket, $this->testPassword);
-        }
+        $this->testAuthenticator = new PasswordAuthenticator($this->testUser, $this->testPassword);
     }
 
-    protected function tearDown()
+    protected function tearDown(): void
     {
         $this->mock->stop();
     }
@@ -148,9 +143,11 @@ abstract class CouchbaseTestCase extends TestCase
      */
     protected function getDefaultBucket(): Bucket
     {
-        $cluster = new Cluster($this->testConnectionString);
-        $cluster->authenticate($this->testAuthenticator);
-        $bucket = $cluster->openBucket($this->testBucket);
+        $options = new ClusterOptions();
+        $options->authenticator($this->testAuthenticator);
+
+        $cluster = new Cluster($this->testConnectionString, $options);
+        $bucket = $cluster->bucket($this->testBucket);
         $this->setTimeouts($bucket);
 
         return $bucket;

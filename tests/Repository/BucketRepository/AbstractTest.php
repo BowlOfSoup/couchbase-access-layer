@@ -21,7 +21,7 @@ abstract class AbstractTest extends CouchbaseTestCase
     /** @var \BowlOfSoup\CouchbaseAccessLayer\Repository\BucketRepository */
     protected $bucketRepository;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -55,7 +55,7 @@ abstract class AbstractTest extends CouchbaseTestCase
     /**
      * Flush bucket and close connection.
      */
-    protected function tearDown()
+    protected function tearDown(): void
     {
         $this->bucket->manager()->flush();
 

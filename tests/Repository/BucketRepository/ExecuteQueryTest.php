@@ -6,7 +6,7 @@ namespace BowlOfSoup\CouchbaseAccessLayer\Test\Repository\BucketRepository;
 
 class ExecuteQueryTest extends AbstractTest
 {
-    public function testExecuteAQueryWithNoResult()
+    public function testExecuteAQueryWithNoResult(): void
     {
         $bucketMock = $this->createBucketMock(
             $this->returnCallback(function () {
@@ -19,7 +19,7 @@ class ExecuteQueryTest extends AbstractTest
         $this->assertSame([], $bucketRepository->executeQuery('someQuery', ['some' => 'parameters']));
     }
 
-    public function testExecuteAQueryWithASingleValueAndNoRowSyntaxInTheQueryResult()
+    public function testExecuteAQueryWithASingleValueAndNoRowSyntaxInTheQueryResult(): void
     {
         $bucketMock = $this->createBucketMock(
             $this->returnCallback(function () {
@@ -32,7 +32,7 @@ class ExecuteQueryTest extends AbstractTest
         $this->assertSame(['foo'], $bucketRepository->executeQuery('someQuery', ['some' => 'parameters']));
     }
 
-    public function testExecuteAQueryWithASingleValue()
+    public function testExecuteAQueryWithASingleValue(): void
     {
         $bucketMock = $this->createBucketMock(
             $this->returnCallback(function () {
@@ -48,7 +48,7 @@ class ExecuteQueryTest extends AbstractTest
         $this->assertSame(['foo'], $bucketRepository->executeQuery('someQuery', ['some' => 'parameters']));
     }
 
-    public function testExecuteAQueryWithResultConsistingOfMultipleDocuments()
+    public function testExecuteAQueryWithResultConsistingOfMultipleDocuments(): void
     {
         $bucketMock = $this->createBucketMock(
             $this->returnCallback(function () {
@@ -95,7 +95,7 @@ class ExecuteQueryTest extends AbstractTest
         );
     }
 
-    public function testExecuteAQueryWithResultIncludingBucketName()
+    public function testExecuteAQueryWithResultIncludingBucketName(): void
     {
         $bucketMock = $this->createBucketMock(
             $this->returnCallback(function () {
@@ -126,7 +126,7 @@ class ExecuteQueryTest extends AbstractTest
         );
     }
 
-    public function testExecuteAQueryAndReturnOnlyTheFirstResult()
+    public function testExecuteAQueryAndReturnOnlyTheFirstResult(): void
     {
         $bucketMock = $this->createBucketMock(
             $this->returnCallback(function () {

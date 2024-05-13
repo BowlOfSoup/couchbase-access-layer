@@ -13,7 +13,7 @@ class ClusterFactoryTest extends TestCase
     /**
      * @throws \PHPUnit\Framework\Exception
      */
-    public function testClusterFactoryCreatesACluster()
+    public function testClusterFactoryCreatesACluster(): void
     {
         $factory = new ClusterFactory('host', 'user', 'password');
         $connection = $factory->create();
