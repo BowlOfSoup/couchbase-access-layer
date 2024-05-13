@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace BowlOfSoup\CouchbaseAccessLayer\Factory;
 
 use Couchbase\Cluster;
+use Couchbase\ClusterOptions;
 use Couchbase\PasswordAuthenticator;
 
 class ClusterFactory
@@ -33,13 +34,14 @@ class ClusterFactory
     /**
      * @return \Couchbase\Cluster
      */
-    public function create(): \CouchbaseCluster
+    public function create(): Cluster
     {
-        $authenticator = new PasswordAuthenticator();
-        $authenticator->username($this->user)->password($this->password);
+        $authenticator = new PasswordAuthenticator($this->user, $this->password);
 
-        $cluster = new Cluster('couchbase://' . $this->host);
-        $cluster->authenticate($authenticator);
+        $options = new ClusterOptions();
+        $options->authenticator($authenticator);
+
+        $cluster = new Cluster('couchbase://' . $this->host, $options);
 
         return $cluster;
     }
