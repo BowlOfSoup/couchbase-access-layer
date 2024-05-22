@@ -4,17 +4,49 @@ declare(strict_types=1);
 
 namespace BowlOfSoup\CouchbaseAccessLayer\Test\Repository\BucketRepository;
 
-class ExecuteQueryTest extends AbstractTest
+use BowlOfSoup\CouchbaseAccessLayer\Factory\ClusterFactory;
+use BowlOfSoup\CouchbaseAccessLayer\Repository\BucketRepository;
+use Couchbase\Cluster;
+use Couchbase\QueryResult;
+use PHPUnit\Framework\MockObject\MockObject;
+
+class ExecuteQueryTestBaseClass extends AbstractTestBaseClass
 {
     public function testExecuteAQueryWithNoResult(): void
     {
-        $bucketMock = $this->createBucketMock(
-            $this->returnCallback(function () {
-                return null;
-            })
-        );
+        $clusterMock = $this
+            ->getMockBuilder(Cluster::class)
+            ->onlyMethods(['bucket', 'query'])
+            ->disableOriginalConstructor()
+            ->getMock();
+        $clusterMock
+            ->expects($this->once())
+            ->method('bucket')
+            ->with('default')
+            ->willReturn($this->bucket);
+        $queryResult = $this
+            ->getMockBuilder(QueryResult::class)
+            ->onlyMethods(['rows'])
+            ->disableOriginalConstructor()
+            ->getMock();
+        $queryResult->method('rows')->willReturn(null);
+        $clusterMock
+            ->expects($this->once())
+            ->method('query')
+            ->willReturn($queryResult);
 
-        $bucketRepository = $this->replaceBucketOnBucketRepositoryMock($bucketMock);
+        /** @var MockObject|ClusterFactory $clusterFactoryMock */
+        $clusterFactoryMock = $this
+            ->getMockBuilder(ClusterFactory::class)
+            ->onlyMethods(['create'])
+            ->disableOriginalConstructor()
+            ->getMock();
+        $clusterFactoryMock
+            ->expects($this->once())
+            ->method('create')
+            ->willReturn($clusterMock);
+
+        $bucketRepository = new BucketRepository('default', $clusterFactoryMock);
 
         $this->assertSame([], $bucketRepository->executeQuery('someQuery', ['some' => 'parameters']));
     }
@@ -22,9 +54,9 @@ class ExecuteQueryTest extends AbstractTest
     public function testExecuteAQueryWithASingleValueAndNoRowSyntaxInTheQueryResult(): void
     {
         $bucketMock = $this->createBucketMock(
-            $this->returnCallback(function () {
+            function () {
                 return 'foo';
-            })
+            }
         );
 
         $bucketRepository = $this->replaceBucketOnBucketRepositoryMock($bucketMock);
@@ -34,47 +66,100 @@ class ExecuteQueryTest extends AbstractTest
 
     public function testExecuteAQueryWithASingleValue(): void
     {
-        $bucketMock = $this->createBucketMock(
-            $this->returnCallback(function () {
+        $clusterMock = $this
+            ->getMockBuilder(Cluster::class)
+            ->onlyMethods(['bucket', 'query'])
+            ->disableOriginalConstructor()
+            ->getMock();
+        $clusterMock
+            ->expects($this->once())
+            ->method('bucket')
+            ->with('default')
+            ->willReturn($this->bucket);
+        $queryResult = $this
+            ->getMockBuilder(QueryResult::class)
+            ->onlyMethods(['rows'])
+            ->disableOriginalConstructor()
+            ->getMock();
+        $queryResult->method('rows')->willReturn(
+            function () {
                 $result = new \stdClass;
                 $result->rows = 'foo';
 
                 return $result;
-            })
+            }
         );
+        $clusterMock
+            ->expects($this->once())
+            ->method('query')
+            ->willReturn($queryResult);
 
-        $bucketRepository = $this->replaceBucketOnBucketRepositoryMock($bucketMock);
+        /** @var MockObject|ClusterFactory $clusterFactoryMock */
+        $clusterFactoryMock = $this
+            ->getMockBuilder(ClusterFactory::class)
+            ->onlyMethods(['create'])
+            ->disableOriginalConstructor()
+            ->getMock();
+        $clusterFactoryMock
+            ->expects($this->once())
+            ->method('create')
+            ->willReturn($clusterMock);
+
+        $bucketRepository = new BucketRepository('default', $clusterFactoryMock);
 
         $this->assertSame(['foo'], $bucketRepository->executeQuery('someQuery', ['some' => 'parameters']));
     }
 
     public function testExecuteAQueryWithResultConsistingOfMultipleDocuments(): void
     {
-        $bucketMock = $this->createBucketMock(
-            $this->returnCallback(function () {
-                $result = new \stdClass;
-                $result->rows = [
-                    [ // document 1
-                        [
-                            'something' => 'or nothing',
-                            'key' => 'value',
-                        ],
-                        [
-                            'foo' => 'bar',
-                        ],
-                    ],
-                    [ // document 2
-                        [
-                            'hello' => 'world',
-                        ]
-                    ],
-                ];
-
-                return $result;
-            })
+        $clusterMock = $this
+            ->getMockBuilder(Cluster::class)
+            ->onlyMethods(['bucket', 'query'])
+            ->disableOriginalConstructor()
+            ->getMock();
+        $clusterMock
+            ->expects($this->once())
+            ->method('bucket')
+            ->with('default')
+            ->willReturn($this->bucket);
+        $queryResult = $this
+            ->getMockBuilder(QueryResult::class)
+            ->onlyMethods(['rows'])
+            ->disableOriginalConstructor()
+            ->getMock();
+        $queryResult->method('rows')->willReturn(
+            [ // document 1
+                [
+                    'something' => 'or nothing',
+                    'key' => 'value',
+                ],
+                [
+                    'foo' => 'bar',
+                ],
+            ],
+            [ // document 2
+                [
+                    'hello' => 'world',
+                ]
+            ]
         );
+        $clusterMock
+            ->expects($this->once())
+            ->method('query')
+            ->willReturn($queryResult);
 
-        $bucketRepository = $this->replaceBucketOnBucketRepositoryMock($bucketMock);
+        /** @var MockObject|ClusterFactory $clusterFactoryMock */
+        $clusterFactoryMock = $this
+            ->getMockBuilder(ClusterFactory::class)
+            ->onlyMethods(['create'])
+            ->disableOriginalConstructor()
+            ->getMock();
+        $clusterFactoryMock
+            ->expects($this->once())
+            ->method('create')
+            ->willReturn($clusterMock);
+
+        $bucketRepository = new BucketRepository('default', $clusterFactoryMock);
 
         $this->assertSame(
             [
@@ -97,24 +182,47 @@ class ExecuteQueryTest extends AbstractTest
 
     public function testExecuteAQueryWithResultIncludingBucketName(): void
     {
-        $bucketMock = $this->createBucketMock(
-            $this->returnCallback(function () {
-                $result = new \stdClass;
-                $result->rows = [
-                    [ // document 1
-                        'someOtherBucketName' => [
-                            'foo' => 'bar',
-                        ],
-                        'default' => [
-                            'hello' => 'world',
-                        ]
-                    ],
-                ];
+        $clusterMock = $this
+            ->getMockBuilder(Cluster::class)
+            ->onlyMethods(['bucket', 'query'])
+            ->disableOriginalConstructor()
+            ->getMock();
+        $clusterMock
+            ->expects($this->once())
+            ->method('bucket')
+            ->with('default')
+            ->willReturn($this->bucket);
+        $queryResult = $this
+            ->getMockBuilder(QueryResult::class)
+            ->onlyMethods(['rows'])
+            ->disableOriginalConstructor()
+            ->getMock();
+        $queryResult->method('rows')->willReturn(
+            [ // document 1
+                'someOtherBucketName' => [
+                    'foo' => 'bar',
+                ],
+                'default' => [
+                    'hello' => 'world',
+                ]
+        ]);
+        $clusterMock
+            ->expects($this->once())
+            ->method('query')
+            ->willReturn($queryResult);
 
-                return $result;
-            }));
+        /** @var MockObject|ClusterFactory $clusterFactoryMock */
+        $clusterFactoryMock = $this
+            ->getMockBuilder(ClusterFactory::class)
+            ->onlyMethods(['create'])
+            ->disableOriginalConstructor()
+            ->getMock();
+        $clusterFactoryMock
+            ->expects($this->once())
+            ->method('create')
+            ->willReturn($clusterMock);
 
-        $bucketRepository = $this->replaceBucketOnBucketRepositoryMock($bucketMock);
+        $bucketRepository = new BucketRepository('default', $clusterFactoryMock);
 
         $this->assertSame(
             [
@@ -128,19 +236,42 @@ class ExecuteQueryTest extends AbstractTest
 
     public function testExecuteAQueryAndReturnOnlyTheFirstResult(): void
     {
-        $bucketMock = $this->createBucketMock(
-            $this->returnCallback(function () {
-                $result = new \stdClass;
-                $result->rows = [
-                    ['foo'],
-                    ['bar'],
-                ];
+        $clusterMock = $this
+            ->getMockBuilder(Cluster::class)
+            ->onlyMethods(['bucket', 'query'])
+            ->disableOriginalConstructor()
+            ->getMock();
+        $clusterMock
+            ->expects($this->once())
+            ->method('bucket')
+            ->with('default')
+            ->willReturn($this->bucket);
+        $queryResult = $this
+            ->getMockBuilder(QueryResult::class)
+            ->onlyMethods(['rows'])
+            ->disableOriginalConstructor()
+            ->getMock();
+        $queryResult->method('rows')->willReturn([
+            ['foo'],
+            ['bar'],
+        ]);
+        $clusterMock
+            ->expects($this->once())
+            ->method('query')
+            ->willReturn($queryResult);
 
-                return $result;
-            })
-        );
+        /** @var MockObject|ClusterFactory $clusterFactoryMock */
+        $clusterFactoryMock = $this
+            ->getMockBuilder(ClusterFactory::class)
+            ->onlyMethods(['create'])
+            ->disableOriginalConstructor()
+            ->getMock();
+        $clusterFactoryMock
+            ->expects($this->once())
+            ->method('create')
+            ->willReturn($clusterMock);
 
-        $bucketRepository = $this->replaceBucketOnBucketRepositoryMock($bucketMock);
+        $bucketRepository = new BucketRepository('default', $clusterFactoryMock);
 
         $this->assertSame('foo', $bucketRepository->executeQueryWithOneResult('someQuery', ['some' => 'parameters']));
     }

@@ -11,7 +11,7 @@ use Couchbase\Exception as CouchbaseException;
 /**
  * Tests all other units from BucketRepository that where not tested in other test classes in this namespace.
  */
-class ClassTest extends AbstractTest
+class ClassTestBaseClass extends AbstractTestBaseClass
 {
     public function testGetBucket(): void
     {
@@ -87,7 +87,7 @@ class ClassTest extends AbstractTest
         $this->expectException(\Couchbase\Exception::class);
         $this->$this->expectExceptionMessage('foo');
 
-        $bucketMock = $this->getMockBuilder(\stdClass::class)->setMethods(['remove'])->getMock();
+        $bucketMock = $this->getMockBuilder(\stdClass::class)->onlyMethods(['remove'])->getMock();
         $bucketMock
             ->expects($this->once())
             ->method('remove')

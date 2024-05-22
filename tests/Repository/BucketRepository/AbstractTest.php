@@ -7,13 +7,13 @@ namespace BowlOfSoup\CouchbaseAccessLayer\Test\Repository\BucketRepository;
 use BowlOfSoup\CouchbaseAccessLayer\Factory\ClusterFactory;
 use BowlOfSoup\CouchbaseAccessLayer\Repository\BucketRepository;
 use BowlOfSoup\CouchbaseAccessLayer\Test\CouchbaseMock\CouchbaseTestCase;
+use Couchbase\Bucket;
 use Couchbase\Cluster;
 use Couchbase\N1qlQuery;
 use PHPUnit\Framework\Assert;
 use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\MockObject\Stub\ReturnCallback;
 
-abstract class AbstractTest extends CouchbaseTestCase
+class AbstractTestBaseClass extends CouchbaseTestCase
 {
     /** @var \Couchbase\Bucket */
     protected $bucket;
@@ -29,37 +29,27 @@ abstract class AbstractTest extends CouchbaseTestCase
 
         $clusterMock = $this
             ->getMockBuilder(Cluster::class)
-            ->setMethods(['openBucket'])
+            ->onlyMethods(['bucket'])
             ->disableOriginalConstructor()
             ->getMock();
         $clusterMock
             ->expects($this->once())
-            ->method('openBucket')
-            ->with('default', '')
-            ->will($this->returnValue($this->bucket));
+            ->method('bucket')
+            ->with('default')
+            ->willReturn($this->bucket);
 
         /** @var \PHPUnit\Framework\MockObject\MockObject|\BowlOfSoup\CouchbaseAccessLayer\Factory\ClusterFactory $clusterFactoryMock */
         $clusterFactoryMock = $this
             ->getMockBuilder(ClusterFactory::class)
-            ->setMethods(['create'])
+            ->onlyMethods(['create'])
             ->disableOriginalConstructor()
             ->getMock();
         $clusterFactoryMock
             ->expects($this->once())
             ->method('create')
-            ->will($this->returnValue($clusterMock));
+            ->willReturn($clusterMock);
 
         $this->bucketRepository = new BucketRepository('default', $clusterFactoryMock);
-    }
-
-    /**
-     * Flush bucket and close connection.
-     */
-    protected function tearDown(): void
-    {
-        $this->bucket->manager()->flush();
-
-        parent::tearDown();
     }
 
     /**
@@ -92,9 +82,9 @@ abstract class AbstractTest extends CouchbaseTestCase
      *
      * @return \PHPUnit\Framework\MockObject\MockObject
      */
-    protected function createBucketMock(ReturnCallback $returnCallback): MockObject
+    protected function createBucketMock(\Closure $returnCallback): MockObject
     {
-        $bucketMock = $this->getMockBuilder(\stdClass::class)->setMethods(['query'])->getMock();
+        $bucketMock = $this->getMockBuilder(Bucket::class)->onlyMethods(['query'])->getMock();
         $bucketMock
             ->expects($this->once())
             ->method('query')
@@ -111,8 +101,15 @@ abstract class AbstractTest extends CouchbaseTestCase
                     return $jsonAsArray;
                 })
             )
-            ->will($returnCallback);
+            ->willReturnCallback($returnCallback);
 
         return $bucketMock;
+    }
+
+    protected function getClusterFactory(): ClusterFactory
+    {
+        $clusterFactory = new ClusterFactory('couchbase', $this->testUser, $this->testPassword);
+
+        return $clusterFactory;
     }
 }
