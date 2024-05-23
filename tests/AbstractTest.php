@@ -2,18 +2,18 @@
 
 declare(strict_types=1);
 
-namespace BowlOfSoup\CouchbaseAccessLayer\Test\Repository\BucketRepository;
+namespace BowlOfSoup\CouchbaseAccessLayer\Test;
 
 use BowlOfSoup\CouchbaseAccessLayer\Factory\ClusterFactory;
 use BowlOfSoup\CouchbaseAccessLayer\Repository\BucketRepository;
-use BowlOfSoup\CouchbaseAccessLayer\Test\CouchbaseMock\CouchbaseTestCase;
+use BowlOfSoup\CouchbaseAccessLayer\Test\unit\CouchbaseMock\CouchbaseTestCase;
 use Couchbase\Bucket;
 use Couchbase\Cluster;
 use Couchbase\N1qlQuery;
 use PHPUnit\Framework\Assert;
 use PHPUnit\Framework\MockObject\MockObject;
 
-class AbstractTestBaseClass extends CouchbaseTestCase
+abstract class AbstractTest extends CouchbaseTestCase
 {
     /** @var \Couchbase\Bucket */
     protected $bucket;
@@ -27,29 +27,7 @@ class AbstractTestBaseClass extends CouchbaseTestCase
 
         $this->bucket = $this->getDefaultBucket();
 
-        $clusterMock = $this
-            ->getMockBuilder(Cluster::class)
-            ->onlyMethods(['bucket'])
-            ->disableOriginalConstructor()
-            ->getMock();
-        $clusterMock
-            ->expects($this->once())
-            ->method('bucket')
-            ->with('default')
-            ->willReturn($this->bucket);
-
-        /** @var \PHPUnit\Framework\MockObject\MockObject|\BowlOfSoup\CouchbaseAccessLayer\Factory\ClusterFactory $clusterFactoryMock */
-        $clusterFactoryMock = $this
-            ->getMockBuilder(ClusterFactory::class)
-            ->onlyMethods(['create'])
-            ->disableOriginalConstructor()
-            ->getMock();
-        $clusterFactoryMock
-            ->expects($this->once())
-            ->method('create')
-            ->willReturn($clusterMock);
-
-        $this->bucketRepository = new BucketRepository('default', $clusterFactoryMock);
+        $this->bucketRepository = new BucketRepository('default', $this->getClusterFactory());
     }
 
     /**

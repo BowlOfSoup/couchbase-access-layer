@@ -36,10 +36,8 @@ class ClusterFactory
      */
     public function create(): Cluster
     {
-        $authenticator = new PasswordAuthenticator($this->user, $this->password);
-
         $options = new ClusterOptions();
-        $options->authenticator($authenticator);
+        $options->credentials($this->user, $this->password);
 
         $cluster = new Cluster('couchbase://' . $this->host, $options);
 

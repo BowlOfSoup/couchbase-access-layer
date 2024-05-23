@@ -2,16 +2,18 @@
 
 declare(strict_types=1);
 
-namespace BowlOfSoup\CouchbaseAccessLayer\Test\Repository\BucketRepository;
+namespace BowlOfSoup\CouchbaseAccessLayer\Test\unit\Repository\BucketRepository;
 
 use BowlOfSoup\CouchbaseAccessLayer\Builder\QueryBuilder;
+use BowlOfSoup\CouchbaseAccessLayer\Test\AbstractTest;
 use Couchbase\Bucket;
-use Couchbase\Exception as CouchbaseException;
+use Couchbase\Exception\CouchbaseException;
+use Couchbase\Exception\DocumentNotFoundException;
 
 /**
  * Tests all other units from BucketRepository that where not tested in other test classes in this namespace.
  */
-class ClassTestBaseClass extends AbstractTestBaseClass
+class ClassTest extends AbstractTest
 {
     public function testGetBucket(): void
     {
@@ -23,14 +25,16 @@ class ClassTestBaseClass extends AbstractTestBaseClass
         $this->assertSame('default', $this->bucketRepository->getBucketName());
     }
 
-    public function testGetDocumentByKey(): void
+    public function testUpsertADocumentAndGetDocumentByKey(): void
     {
         $id = uniqid();
         $value = ['someData' => 'test123', 'foo' => ['somethingsomething']];
 
-        $this->bucket->upsert($id, $value);
+        $this->bucketRepository->upsert($id, $value);
 
         $this->assertSame($value, $this->bucketRepository->getByKey($id));
+
+        $this->bucketRepository->remove($id);
     }
 
     public function testGetDocumentByKeyButDocumentDoesNotExist(): void
@@ -46,18 +50,8 @@ class ClassTestBaseClass extends AbstractTestBaseClass
         $this->assertInstanceOf(QueryBuilder::class, $queryBuilder);
     }
 
-    public function testUpsertADocument(): void
-    {
-        $id = uniqid();
-        $value = ['someData' => 'test123', 'foo' => ['somethingsomething']];
-
-        $this->bucketRepository->upsert($id, $value);
-
-        $this->assertSame($value, $this->bucketRepository->getByKey($id));
-    }
-
     /**
-     * @throws \Couchbase\Exception
+     * @throws CouchbaseException
      */
     public function testRemoveADocument(): void
     {
@@ -71,30 +65,10 @@ class ClassTestBaseClass extends AbstractTestBaseClass
         $this->assertNull($this->bucketRepository->getByKey($id));
     }
 
-    /**
-     * @throws \Couchbase\Exception
-     */
     public function testRemoveADocumentWhichDoesNotExist(): void
     {
-        $this->bucketRepository->remove('123');
-    }
+        $this->expectException(DocumentNotFoundException::class);
 
-    /**
-     * @throws \Couchbase\Exception
-     */
-    public function testRemoveADocumentSomeExceptionThrown(): void
-    {
-        $this->expectException(\Couchbase\Exception::class);
-        $this->$this->expectExceptionMessage('foo');
-
-        $bucketMock = $this->getMockBuilder(\stdClass::class)->onlyMethods(['remove'])->getMock();
-        $bucketMock
-            ->expects($this->once())
-            ->method('remove')
-            ->will($this->throwException(new CouchbaseException('foo')));
-
-        $bucketRepository = $this->replaceBucketOnBucketRepositoryMock($bucketMock);
-
-        $bucketRepository->remove('123');
+        $this->bucketRepository->remove('123abc');
     }
 }

@@ -38,7 +38,7 @@ class Result implements \Iterator, \ArrayAccess, \Countable, \JsonSerializable
     /**
      * @return int|null
      */
-    public function getCount()
+    public function getCount(): ?int
     {
         return $this->count;
     }
@@ -75,36 +75,27 @@ class Result implements \Iterator, \ArrayAccess, \Countable, \JsonSerializable
         return $this;
     }
 
-    public function rewind()
+    public function rewind(): void
     {
         $this->position = 0;
     }
 
-    /**
-     * @return mixed
-     */
-    public function current()
+    public function current(): mixed
     {
         return $this->container[$this->position];
     }
 
-    /**
-     * @return mixed
-     */
-    public function key()
+    public function key(): mixed
     {
         return $this->position;
     }
 
-    public function next()
+    public function next(): void
     {
         ++$this->position;
     }
 
-    /**
-     * @return mixed
-     */
-    public function valid()
+    public function valid(): bool
     {
         return isset($this->container[$this->position]);
     }
@@ -112,7 +103,7 @@ class Result implements \Iterator, \ArrayAccess, \Countable, \JsonSerializable
     /**
      * {@inheritdoc}
      */
-    public function offsetSet($offset, $value)
+    public function offsetSet($offset, $value): void
     {
         if (is_null($offset)) {
             $this->container[] = $value;
@@ -132,7 +123,7 @@ class Result implements \Iterator, \ArrayAccess, \Countable, \JsonSerializable
     /**
      * {@inheritdoc}
      */
-    public function offsetUnset($offset)
+    public function offsetUnset($offset): void
     {
         unset($this->container[$offset]);
     }
@@ -140,23 +131,17 @@ class Result implements \Iterator, \ArrayAccess, \Countable, \JsonSerializable
     /**
      * {@inheritdoc}
      */
-    public function offsetGet($offset)
+    public function offsetGet($offset): mixed
     {
         return isset($this->container[$offset]) ? $this->container[$offset] : null;
     }
 
-    /**
-     * @return mixed
-     */
-    public function getFirstResult()
+    public function getFirstResult(): mixed
     {
         return reset($this->container);
     }
 
-    /**
-     * @return int
-     */
-    public function count()
+    public function count(): int
     {
         return count($this->container);
     }
@@ -164,7 +149,7 @@ class Result implements \Iterator, \ArrayAccess, \Countable, \JsonSerializable
     /**
      * {@inheritDoc}
      */
-    public function jsonSerialize()
+    public function jsonSerialize(): mixed
     {
         return $this->container;
     }

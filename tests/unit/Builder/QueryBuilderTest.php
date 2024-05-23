@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace BowlOfSoup\CouchbaseAccessLayer\Test\Builder;
+namespace BowlOfSoup\CouchbaseAccessLayer\Test\unit\Builder;
 
 use BowlOfSoup\CouchbaseAccessLayer\Builder\QueryBuilder;
 use BowlOfSoup\CouchbaseAccessLayer\Exception\CouchbaseQueryException;
 use BowlOfSoup\CouchbaseAccessLayer\Model\Query;
-use BowlOfSoup\CouchbaseAccessLayer\Test\CouchbaseMock\CouchbaseTestCase;
+use BowlOfSoup\CouchbaseAccessLayer\Test\unit\CouchbaseMock\CouchbaseTestCase;
 
 class QueryBuilderTest extends CouchbaseTestCase
 {

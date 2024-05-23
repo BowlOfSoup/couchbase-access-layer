@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace BowlOfSoup\CouchbaseAccessLayer\Test\CouchbaseMock;
+namespace BowlOfSoup\CouchbaseAccessLayer\Test\unit\CouchbaseMock;
 
 class CouchbaseMock
 {
-    const VERSION = '1.5.12';
+    const VERSION = '1.5.25';
 
     /** @var string */
     private $jarPath;
@@ -51,7 +51,6 @@ class CouchbaseMock
                 "--port", "0",
                 "--replicas", "2",
                 "--nodes", "4",
-                "--buckets", "default::"
             ]);
             if (!$rc) {
                 exit(0);
@@ -114,6 +113,7 @@ class CouchbaseMock
     public function connectionString(array $options = [])
     {
         $response = $this->send(['command' => 'GET_MCPORTS']);
+
         $connectionString = "";
         foreach ($response["payload"] as $port) {
             if ($connectionString == "") {

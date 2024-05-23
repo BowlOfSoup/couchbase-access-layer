@@ -8,8 +8,11 @@ use BowlOfSoup\CouchbaseAccessLayer\Builder\QueryBuilder;
 use BowlOfSoup\CouchbaseAccessLayer\Factory\ClusterFactory;
 use BowlOfSoup\CouchbaseAccessLayer\Model\Result;
 use Couchbase\Bucket;
-use Couchbase\Exception as CouchbaseException;
-use Couchbase\N1qlQuery;
+use Couchbase\Exception\CouchbaseException;
+use Couchbase\InsertOptions;
+use Couchbase\MutationResult;
+use Couchbase\QueryOptions;
+use Couchbase\UpsertOptions;
 
 /**
  * Repository to get data out of a single Couchbase bucket.
@@ -24,6 +27,9 @@ class BucketRepository
     /** @var \Couchbase\Bucket */
     protected $bucket;
 
+    /** @var \Couchbase\Cluster  */
+    protected $cluster;
+
     /**
      * @param string $bucketName
      * @param \BowlOfSoup\CouchbaseAccessLayer\Factory\ClusterFactory $clusterFactory
@@ -36,11 +42,11 @@ class BucketRepository
     ) {
         $this->bucketName = $bucketName;
 
-        $cluster = $clusterFactory->create();
+        $this->cluster = $clusterFactory->create();
         try {
-            $this->bucket = $cluster->openBucket($bucketName);
+            $this->bucket = $this->cluster->bucket($bucketName);
         } catch (\Throwable $t) {
-            $this->bucket = $cluster->openBucket($bucketName, $bucketPassword);
+            $this->bucket = $this->cluster->bucket($bucketName, $bucketPassword);
         }
     }
 
@@ -72,7 +78,7 @@ class BucketRepository
     public function getByKey($key)
     {
         try {
-            return json_decode(json_encode($this->bucket->get($key)->value), true);
+            return json_decode(json_encode($this->bucket->defaultCollection()->get($key)->content()), true);
         } catch (CouchbaseException $e) {
             return null;
         }
@@ -83,29 +89,30 @@ class BucketRepository
      * @param mixed $value
      * @param array $options
      *
-     * @return \Couchbase\Document|array
+     * @return MutationResult|array
      */
     public function upsert($ids, $value, array $options = [])
     {
-        return $this->bucket->upsert($ids, $value, $options);
+        $options = new UpsertOptions();
+
+        return $this->bucket->defaultCollection()->upsert($ids, $value, $options);
+    }
+
+    public function insert($ids, $value)
+    {
+        $options = new InsertOptions();
+
+        return $this->bucket->defaultCollection()->insert($ids, $value);
     }
 
     /**
      * @param string $id
      *
-     * @throws \Couchbase\Exception
+     * @throws CouchbaseException
      */
-    public function remove(string $id)
+    public function remove(string $id): void
     {
-        try {
-            $this->bucket->remove($id);
-        } catch(CouchbaseException $exception) {
-            if ($exception->getCode() === COUCHBASE_KEY_ENOENT) {
-                // Document does not exist; No need to throw error.
-            } else {
-                throw $exception;
-            }
-        }
+        $this->bucket->defaultCollection()->remove($id);
     }
 
     /**
@@ -118,12 +125,16 @@ class BucketRepository
      */
     public function executeQuery(string $query, array $params = [])
     {
-        $query = N1qlQuery::fromString($query);
-        $query->namedParams($params);
+        $options = new QueryOptions();
+        if (count($params) > 0) {
+            $options->namedParameters($params);
+        }
+        $result = $this->cluster->query(
+            $query,
+            $options)
+            ->rows();
 
-        $result = $this->bucket->query($query, static::RESULT_AS_ARRAY);
-
-        return $this->extractQueryResult($result);
+        return $this->cleanResult($this->extractQueryResult($result));
     }
 
     /**
@@ -162,7 +173,7 @@ class BucketRepository
     {
         $queryResult = $this->getResultUnprocessed($queryBuilder);
 
-        $result = new Result($this->extractQueryResult($queryResult));
+        $result = new Result($this->cleanResult($this->extractQueryResult($queryResult)));
         if (isset($queryResult->metrics)) {
             // metrics key does not exist when no limit of offset are given in a N1ql query.
             $result
@@ -195,6 +206,20 @@ class BucketRepository
         return $result->get();
     }
 
+    private function cleanResult(array $result): array
+    {
+        $returnableResult = [];
+
+        foreach($result[0] as $item) {
+            if (!is_array($item)) {
+                var_dump($item);die();
+            }
+            $returnableResult[] = $item[$this->bucket->name()];
+        }
+
+        return $returnableResult;
+    }
+
     /**
      * Returns actual result of a query unprocessed and inconsistent.
      *
@@ -204,16 +229,20 @@ class BucketRepository
      *
      * @throws \BowlOfSoup\CouchbaseAccessLayer\Exception\CouchbaseQueryException
      *
-     * @return object|array
+     * @return array|null
      */
     public function getResultUnprocessed(QueryBuilder $queryBuilder)
     {
-        $queryString = $queryBuilder->getQuery();
+        $options = null;
+        if (false === empty($queryBuilder->getParameters())) {
+            $options = new QueryOptions();
+            $options->namedParameters($queryBuilder->getParameters());
+        }
 
-        $query = N1qlQuery::fromString($queryString);
-        $query->namedParams($queryBuilder->getParameters());
-
-        return $this->bucket->query($query, static::RESULT_AS_ARRAY);
+        return $this->cluster->query(
+                $queryBuilder->getQuery(),
+                $options)
+            ->rows();
     }
 
     /**
