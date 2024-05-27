@@ -1,7 +1,7 @@
 FROM php:8.3-fpm
 
 RUN apt-get update && apt-get install -y \
-        wget build-essential checkinstall zlib1g-dev libssl-dev libxml2-dev libzip-dev default-jre git \
+        wget build-essential checkinstall zlib1g-dev libssl-dev libxml2-dev libzip-dev git \
         && wget https://github.com/Kitware/CMake/releases/download/v3.27.1/cmake-3.27.1.tar.gz \
         && tar -zxvf cmake-3.27.1.tar.gz \
         && cd cmake-3.27.1 \
