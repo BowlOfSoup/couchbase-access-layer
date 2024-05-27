@@ -7,8 +7,8 @@ namespace BowlOfSoup\CouchbaseAccessLayer\Repository;
 use BowlOfSoup\CouchbaseAccessLayer\Builder\QueryBuilder;
 use BowlOfSoup\CouchbaseAccessLayer\Factory\ClusterFactory;
 use BowlOfSoup\CouchbaseAccessLayer\Model\Result;
-use Couchbase\Bucket;
 use Couchbase\BucketInterface;
+use Couchbase\ClusterInterface;
 use Couchbase\Exception\CouchbaseException;
 use Couchbase\InsertOptions;
 use Couchbase\MutationResult;
@@ -20,22 +20,12 @@ use Couchbase\UpsertOptions;
  */
 class BucketRepository
 {
-    const RESULT_AS_ARRAY = true;
+    protected string $bucketName;
 
-    /** @var string */
-    protected $bucketName;
+    protected BucketInterface $bucket;
 
-    /** @var \Couchbase\Bucket */
-    protected $bucket;
+    protected ClusterInterface $cluster;
 
-    /** @var \Couchbase\Cluster  */
-    protected $cluster;
-
-    /**
-     * @param string $bucketName
-     * @param \BowlOfSoup\CouchbaseAccessLayer\Factory\ClusterFactory $clusterFactory
-     * @param string $bucketPassword
-     */
     public function __construct(
         string $bucketName,
         ClusterFactory $clusterFactory,
@@ -65,12 +55,8 @@ class BucketRepository
      * Use this method to get a Couchbase document by its key.
      *
      * The get() method always returns a stdClass object, this recursively converts to assoc array.
-     *
-     * @param string $key
-     *
-     * @return array|null
      */
-    public function getByKey($key)
+    public function getByKey(string $key): ?array
     {
         try {
             return json_decode(json_encode($this->bucket->defaultCollection()->get($key)->content()), true);
@@ -80,29 +66,28 @@ class BucketRepository
     }
 
     /**
-     * @param string|array $ids
+     * @param string $ids
      * @param mixed $value
      * @param array $options
-     *
-     * @return MutationResult|array
      */
-    public function upsert($ids, $value, array $options = [])
+    public function upsert(string $id, $value, array $options = []): MutationResult
     {
         $options = new UpsertOptions();
 
-        return $this->bucket->defaultCollection()->upsert($ids, $value, $options);
-    }
-
-    public function insert($ids, $value)
-    {
-        $options = new InsertOptions();
-
-        return $this->bucket->defaultCollection()->insert($ids, $value);
+        return $this->bucket->defaultCollection()->upsert($id, $value, $options);
     }
 
     /**
-     * @param string $id
-     *
+     * @param string $ids
+     * @param $value
+     * @return MutationResult
+     */
+    public function insert(string $id, $value): MutationResult
+    {
+        return $this->bucket->defaultCollection()->insert($id, $value);
+    }
+
+    /**
      * @throws CouchbaseException
      */
     public function remove(string $id): void
@@ -110,15 +95,7 @@ class BucketRepository
         $this->bucket->defaultCollection()->remove($id);
     }
 
-    /**
-     * Input a query string and query parameters.
-     *
-     * @param string $query
-     * @param array $params
-     *
-     * @return array|null
-     */
-    public function executeQuery(string $query, array $params = [])
+    public function executeQuery(string $query, array $params = []): ?array
     {
         $options = new QueryOptions();
         if (count($params) > 0) {
@@ -132,37 +109,20 @@ class BucketRepository
         return $this->cleanResult($this->extractQueryResult($result));
     }
 
-    /**
-     * Input a query string and query parameters, get single, or first result.
-     *
-     * @param string $query
-     * @param array $params
-     *
-     * @return mixed
-     */
-    public function executeQueryWithOneResult(string $query, array $params = [])
+    public function executeQueryWithOneResult(string $query, array $params = []): mixed
     {
         $result = $this->executeQuery($query, $params);
 
         return reset($result);
     }
 
-    /**
-     * @return \BowlOfSoup\CouchbaseAccessLayer\Builder\QueryBuilder
-     */
     public function createQueryBuilder(): QueryBuilder
     {
         return new QueryBuilder($this->bucketName);
     }
 
     /**
-     * Get result for a Query Builder, transforms it into a result object.
-     *
-     * @param \BowlOfSoup\CouchbaseAccessLayer\Builder\QueryBuilder $queryBuilder
-     *
      * @throws \BowlOfSoup\CouchbaseAccessLayer\Exception\CouchbaseQueryException
-     *
-     * @return \BowlOfSoup\CouchbaseAccessLayer\Model\Result
      */
     public function getResult(QueryBuilder $queryBuilder): Result
     {
@@ -178,15 +138,7 @@ class BucketRepository
     }
 
     /**
-     * Get result for a Query Builder, returns a consistent result.
-     *
-     * This method strips out the bucket name from the result set.
-     *
-     * @param \BowlOfSoup\CouchbaseAccessLayer\Builder\QueryBuilder $queryBuilder
-     *
      * @throws \BowlOfSoup\CouchbaseAccessLayer\Exception\CouchbaseQueryException
-     *
-     * @return array
      */
     public function getResultAsArray(QueryBuilder $queryBuilder): array
     {
@@ -207,17 +159,9 @@ class BucketRepository
     }
 
     /**
-     * Returns actual result of a query unprocessed and inconsistent.
-     *
-     * Pass this Query Builder to BucketRepository->getResult() to get a consistent result.
-     *
-     * @param \BowlOfSoup\CouchbaseAccessLayer\Builder\QueryBuilder $queryBuilder
-     *
      * @throws \BowlOfSoup\CouchbaseAccessLayer\Exception\CouchbaseQueryException
-     *
-     * @return array|null
      */
-    public function getResultUnprocessed(QueryBuilder $queryBuilder)
+    public function getResultUnprocessed(QueryBuilder $queryBuilder): ?array
     {
         $options = null;
         if (false === empty($queryBuilder->getParameters())) {
@@ -231,14 +175,7 @@ class BucketRepository
             ->rows();
     }
 
-    /**
-     * @param mixed $rawQueryResult
-     *
-     * This strips out the bucket name from the result set and makes it consistent.
-     *
-     * @return array
-     */
-    private function extractQueryResult($rawQueryResult): array
+    private function extractQueryResult(mixed $rawQueryResult): array
     {
         if (null === $rawQueryResult) {
             return [];
