@@ -8,6 +8,7 @@ use BowlOfSoup\CouchbaseAccessLayer\Builder\QueryBuilder;
 use BowlOfSoup\CouchbaseAccessLayer\Factory\ClusterFactory;
 use BowlOfSoup\CouchbaseAccessLayer\Model\Result;
 use Couchbase\Bucket;
+use Couchbase\BucketInterface;
 use Couchbase\Exception\CouchbaseException;
 use Couchbase\InsertOptions;
 use Couchbase\MutationResult;
@@ -50,17 +51,11 @@ class BucketRepository
         }
     }
 
-    /**
-     * @return \Couchbase\Bucket
-     */
-    public function getBucket(): Bucket
+    public function getBucket(): BucketInterface
     {
         return $this->bucket;
     }
 
-    /**
-     * @return string
-     */
     public function getBucketName(): string
     {
         return $this->bucketName;
@@ -174,16 +169,10 @@ class BucketRepository
         $queryResult = $this->getResultUnprocessed($queryBuilder);
 
         $result = new Result($this->cleanResult($this->extractQueryResult($queryResult)));
-        if (isset($queryResult->metrics)) {
-            // metrics key does not exist when no limit of offset are given in a N1ql query.
-            $result
-                ->setCount((int) $queryResult->metrics['resultCount'])
-                ->setTotalCount(isset($queryResult->metrics['sortCount']) ? (int) $queryResult->metrics['sortCount'] : (int) $queryResult->metrics['resultCount']);
-        } else {
-            $result
-                ->setCount(count($result))
-                ->setTotalCount(count($result));
-        }
+
+        $result
+            ->setCount(count($result))
+            ->setTotalCount(count($result));
 
         return $result;
     }
