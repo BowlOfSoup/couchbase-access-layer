@@ -1,3 +1,6 @@
 .idea
 vendor
 tests/CouchbaseMock/CouchbaseMock.jar
+tests/coverage
+.phpunit.cache
+.phpunit.result.cache

@@ -2,18 +2,19 @@
 
 declare(strict_types=1);
 
-namespace BowlOfSoup\CouchbaseAccessLayer\Test\Builder;
+namespace BowlOfSoup\CouchbaseAccessLayer\Test\unit\Builder;
 
 use BowlOfSoup\CouchbaseAccessLayer\Builder\QueryBuilder;
+use BowlOfSoup\CouchbaseAccessLayer\Exception\CouchbaseQueryException;
 use BowlOfSoup\CouchbaseAccessLayer\Model\Query;
-use BowlOfSoup\CouchbaseAccessLayer\Test\CouchbaseMock\CouchbaseTestCase;
+use BowlOfSoup\CouchbaseAccessLayer\Test\unit\CouchbaseMock\CouchbaseTestCase;
 
 class QueryBuilderTest extends CouchbaseTestCase
 {
     /**
      * @throws \BowlOfSoup\CouchbaseAccessLayer\Exception\CouchbaseQueryException
      */
-    public function testGetQuery()
+    public function testGetQuery(): void
     {
         $queryBuilder = new QueryBuilder('default_bucket');
 
@@ -56,7 +57,7 @@ class QueryBuilderTest extends CouchbaseTestCase
     /**
      * @throws \BowlOfSoup\CouchbaseAccessLayer\Exception\CouchbaseQueryException
      */
-    public function testGetQueryWithWhereOr()
+    public function testGetQueryWithWhereOr(): void
     {
         $queryBuilder = new QueryBuilder('default_bucket');
 
@@ -98,7 +99,7 @@ class QueryBuilderTest extends CouchbaseTestCase
     /**
      * @throws \BowlOfSoup\CouchbaseAccessLayer\Exception\CouchbaseQueryException
      */
-    public function testGetQuerySelectAll()
+    public function testGetQuerySelectAll(): void
     {
         $queryBuilder = new QueryBuilder('default_bucket');
 
@@ -111,7 +112,7 @@ class QueryBuilderTest extends CouchbaseTestCase
     /**
      * @throws \BowlOfSoup\CouchbaseAccessLayer\Exception\CouchbaseQueryException
      */
-    public function testQueryWithRaw()
+    public function testQueryWithRaw(): void
     {
         $queryBuilder = new QueryBuilder('default_bucket');
 
@@ -128,7 +129,7 @@ class QueryBuilderTest extends CouchbaseTestCase
     /**
      * @throws \BowlOfSoup\CouchbaseAccessLayer\Exception\CouchbaseQueryException
      */
-    public function testQueryWithDistinctAndRawUsingAnIndex()
+    public function testQueryWithDistinctAndRawUsingAnIndex(): void
     {
         $queryBuilder = new QueryBuilder('default_bucket');
 
@@ -147,7 +148,7 @@ class QueryBuilderTest extends CouchbaseTestCase
     /**
      * @throws \BowlOfSoup\CouchbaseAccessLayer\Exception\CouchbaseQueryException
      */
-    public function testQueryWithSubSelectInFrom()
+    public function testQueryWithSubSelectInFrom(): void
     {
         $queryBuilderForSubSelect = new QueryBuilder('possibly_some_other_bucket');
         $queryBuilderForSubSelect->where('type = $foo');
@@ -170,7 +171,7 @@ class QueryBuilderTest extends CouchbaseTestCase
     /**
      * @throws \BowlOfSoup\CouchbaseAccessLayer\Exception\CouchbaseQueryException
      */
-    public function testQueryWithUseOfKeys()
+    public function testQueryWithUseOfKeys(): void
     {
         $queryBuilder = new QueryBuilder('default_bucket');
 
@@ -187,7 +188,7 @@ class QueryBuilderTest extends CouchbaseTestCase
     /**
      * @throws \BowlOfSoup\CouchbaseAccessLayer\Exception\CouchbaseQueryException
      */
-    public function testQueryWithUseOfKeysMultipleGiven()
+    public function testQueryWithUseOfKeysMultipleGiven(): void
     {
         $queryBuilder = new QueryBuilder('default_bucket');
 
@@ -199,22 +200,20 @@ class QueryBuilderTest extends CouchbaseTestCase
         );
     }
 
-    /**
-     * @expectedException \BowlOfSoup\CouchbaseAccessLayer\Exception\CouchbaseQueryException
-     * @expectedExceptionMessage Can't build N1QL query because of missing 'FROM'.
-     */
-    public function testQueryHasExceptionBecauseNoFromWasGiven()
+    public function testQueryHasExceptionBecauseNoFromWasGiven(): void
     {
+        $this->expectException(CouchbaseQueryException::class);
+        $this->expectExceptionMessage("Can't build N1QL query because of missing 'FROM'.");
+
         $queryBuilder = new QueryBuilder();
         $queryBuilder->getQuery();
     }
 
-    /**
-     * @expectedException \BowlOfSoup\CouchbaseAccessLayer\Exception\CouchbaseQueryException
-     * @expectedExceptionMessage Can only use 'SELECT RAW' when exactly one property is selected.
-     */
-    public function testQueryHasExceptionBecauseMultipleSelectsAreUsedWithRawClause()
+    public function testQueryHasExceptionBecauseMultipleSelectsAreUsedWithRawClause(): void
     {
+        $this->expectException(CouchbaseQueryException::class);
+        $this->expectExceptionMessage("Can only use 'SELECT RAW' when exactly one property is selected.");
+
         $queryBuilder = new QueryBuilder('default_bucket');
 
         $queryBuilder
@@ -225,12 +224,11 @@ class QueryBuilderTest extends CouchbaseTestCase
         $queryBuilder->getQuery();
     }
 
-    /**
-     * @expectedException \BowlOfSoup\CouchbaseAccessLayer\Exception\CouchbaseQueryException
-     * @expectedExceptionMessage Can only use 'SELECT RAW' when exactly one property is selected.
-     */
-    public function testQueryHasExceptionBecauseNoSelectsAreUsedWithRawClause()
+    public function testQueryHasExceptionBecauseNoSelectsAreUsedWithRawClause(): void
     {
+        $this->expectException(CouchbaseQueryException::class);
+        $this->expectExceptionMessage("Can only use 'SELECT RAW' when exactly one property is selected.");
+
         $queryBuilder = new QueryBuilder('default_bucket');
         $queryBuilder->selectRaw();
         $queryBuilder->getQuery();

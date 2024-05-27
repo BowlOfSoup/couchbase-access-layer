@@ -1,0 +1,38 @@
+services:
+  php:
+    build:
+      context: .
+      dockerfile: 'docker/Dockerfile'
+    volumes:
+      - './:/usr/src/myapp'
+    depends_on:
+      - 'couchbase'
+
+  couchbase:
+    image: couchbase/server:${COUCHBASE_VERSION:-7.6.1}
+    volumes:
+      - type: volume
+        source: couchbase
+        target: /opt/couchbase/var
+    environment:
+      - CLUSTER_NAME=default
+      - COUCHBASE_ADMINISTRATOR_USERNAME=Administrator
+      - COUCHBASE_ADMINISTRATOR_PASSWORD=password
+      - COUCHBASE_BUCKET=default
+      - COUCHBASE_BUCKET_RAMSIZE=256
+      - COUCHBASE_RBAC_USERNAME=default
+      - COUCHBASE_RBAC_PASSWORD=
+      - COUCHBASE_RBAC_NAME=admin
+      - COUCHBASE_RAM_SIZE=512
+      - COUCHBASE_INDEX_RAM_SIZE=256
+    working_dir: /opt/couchbase
+    ports:
+      - "8191:8091"
+      - "9223:9123"
+      - "12207:11207"
+      - "12210:11210"
+      - "12280:11280"
+      - "19091:18091"
+
+volumes:
+  couchbase:

@@ -6,48 +6,30 @@ namespace BowlOfSoup\CouchbaseAccessLayer\Model;
 
 class Result implements \Iterator, \ArrayAccess, \Countable, \JsonSerializable
 {
-    /** @var array */
-    private $container;
+    private array $container;
 
-    /** @var int */
-    private $count;
+    private ?int $count = null;
 
-    /** @var int */
-    private $totalCount;
+    private ?int $totalCount = null;
 
-    /** @var int */
-    private $position = 0;
+    private int $position = 0;
 
-    /**
-     * @param array $result
-     */
     public function __construct(array $result)
     {
         $this->container = $result;
         $this->position = 0;
     }
 
-    /**
-     * @return array
-     */
     public function get(): array
     {
         return $this->container;
     }
 
-    /**
-     * @return int|null
-     */
-    public function getCount()
+    public function getCount(): ?int
     {
         return $this->count;
     }
 
-    /**
-     * @param int $count
-     *
-     * @return \BowlOfSoup\CouchbaseAccessLayer\Model\Result
-     */
     public function setCount(int $count): Result
     {
         $this->count = $count;
@@ -55,19 +37,11 @@ class Result implements \Iterator, \ArrayAccess, \Countable, \JsonSerializable
         return $this;
     }
 
-    /**
-     * @return int|null
-     */
-    public function getTotalCount()
+    public function getTotalCount(): ?int
     {
         return $this->totalCount;
     }
 
-    /**
-     * @param int $totalCount
-     *
-     * @return \BowlOfSoup\CouchbaseAccessLayer\Model\Result
-     */
     public function setTotalCount(int $totalCount): Result
     {
         $this->totalCount = $totalCount;
@@ -75,44 +49,32 @@ class Result implements \Iterator, \ArrayAccess, \Countable, \JsonSerializable
         return $this;
     }
 
-    public function rewind()
+    public function rewind(): void
     {
         $this->position = 0;
     }
 
-    /**
-     * @return mixed
-     */
-    public function current()
+    public function current(): mixed
     {
         return $this->container[$this->position];
     }
 
-    /**
-     * @return mixed
-     */
-    public function key()
+    public function key(): mixed
     {
         return $this->position;
     }
 
-    public function next()
+    public function next(): void
     {
         ++$this->position;
     }
 
-    /**
-     * @return mixed
-     */
-    public function valid()
+    public function valid(): bool
     {
         return isset($this->container[$this->position]);
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function offsetSet($offset, $value)
+    public function offsetSet($offset, $value): void
     {
         if (is_null($offset)) {
             $this->container[] = $value;
@@ -121,50 +83,32 @@ class Result implements \Iterator, \ArrayAccess, \Countable, \JsonSerializable
         }
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function offsetExists($offset): bool
     {
         return isset($this->container[$offset]);
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function offsetUnset($offset)
+    public function offsetUnset($offset): void
     {
         unset($this->container[$offset]);
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function offsetGet($offset)
+    public function offsetGet($offset): mixed
     {
         return isset($this->container[$offset]) ? $this->container[$offset] : null;
     }
 
-    /**
-     * @return mixed
-     */
-    public function getFirstResult()
+    public function getFirstResult(): mixed
     {
         return reset($this->container);
     }
 
-    /**
-     * @return int
-     */
-    public function count()
+    public function count(): int
     {
         return count($this->container);
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function jsonSerialize()
+    public function jsonSerialize(): array
     {
         return $this->container;
     }

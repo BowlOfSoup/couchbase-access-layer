@@ -196,4 +196,11 @@ put the parameters in the 'master' query builder. More info on [this](https://do
 Unit tests
 ----------
 
-When running the unit tests, a 'CouchbaseMock.jar' file (a dummy Couchbase instance, ~3.8 MB) will be downloaded.
+In a previous version, the tests used a dummy couchbase instance called CouchbaseMock.jar. This is not compatible
+with recent Couchbase versions. Therefore, the current situation has a Docker setup with an actual Couchbase instance
+for the tests. Assuming you have Docker installed, you can run the tests by running the following commands:
+
+- `docker compose up -d`
+- `docker exec -ti couchbase-access-layer-php-1 bash`
+- `vendor/bin/phpunit`
+

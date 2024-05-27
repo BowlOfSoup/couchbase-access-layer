@@ -7,28 +7,25 @@ namespace BowlOfSoup\CouchbaseAccessLayer\Repository;
 use BowlOfSoup\CouchbaseAccessLayer\Builder\QueryBuilder;
 use BowlOfSoup\CouchbaseAccessLayer\Factory\ClusterFactory;
 use BowlOfSoup\CouchbaseAccessLayer\Model\Result;
-use Couchbase\Bucket;
-use Couchbase\Exception as CouchbaseException;
-use Couchbase\N1qlQuery;
+use Couchbase\BucketInterface;
+use Couchbase\ClusterInterface;
+use Couchbase\Exception\CouchbaseException;
+use Couchbase\InsertOptions;
+use Couchbase\MutationResult;
+use Couchbase\QueryOptions;
+use Couchbase\UpsertOptions;
 
 /**
  * Repository to get data out of a single Couchbase bucket.
  */
 class BucketRepository
 {
-    const RESULT_AS_ARRAY = true;
+    protected string $bucketName;
 
-    /** @var string */
-    protected $bucketName;
+    protected BucketInterface $bucket;
 
-    /** @var \Couchbase\Bucket */
-    protected $bucket;
+    protected ClusterInterface $cluster;
 
-    /**
-     * @param string $bucketName
-     * @param \BowlOfSoup\CouchbaseAccessLayer\Factory\ClusterFactory $clusterFactory
-     * @param string $bucketPassword
-     */
     public function __construct(
         string $bucketName,
         ClusterFactory $clusterFactory,
@@ -36,25 +33,19 @@ class BucketRepository
     ) {
         $this->bucketName = $bucketName;
 
-        $cluster = $clusterFactory->create();
+        $this->cluster = $clusterFactory->create();
         try {
-            $this->bucket = $cluster->openBucket($bucketName);
+            $this->bucket = $this->cluster->bucket($bucketName);
         } catch (\Throwable $t) {
-            $this->bucket = $cluster->openBucket($bucketName, $bucketPassword);
+            $this->bucket = $this->cluster->bucket($bucketName, $bucketPassword);
         }
     }
 
-    /**
-     * @return \Couchbase\Bucket
-     */
-    public function getBucket(): Bucket
+    public function getBucket(): BucketInterface
     {
         return $this->bucket;
     }
 
-    /**
-     * @return string
-     */
     public function getBucketName(): string
     {
         return $this->bucketName;
@@ -64,129 +55,90 @@ class BucketRepository
      * Use this method to get a Couchbase document by its key.
      *
      * The get() method always returns a stdClass object, this recursively converts to assoc array.
-     *
-     * @param string $key
-     *
-     * @return array|null
      */
-    public function getByKey($key)
+    public function getByKey(string $key): ?array
     {
         try {
-            return json_decode(json_encode($this->bucket->get($key)->value), true);
+            return json_decode(json_encode($this->bucket->defaultCollection()->get($key)->content()), true);
         } catch (CouchbaseException $e) {
             return null;
         }
     }
 
     /**
-     * @param string|array $ids
+     * @param string $ids
      * @param mixed $value
      * @param array $options
-     *
-     * @return \Couchbase\Document|array
      */
-    public function upsert($ids, $value, array $options = [])
+    public function upsert(string $id, $value, array $options = []): MutationResult
     {
-        return $this->bucket->upsert($ids, $value, $options);
+        $options = new UpsertOptions();
+
+        return $this->bucket->defaultCollection()->upsert($id, $value, $options);
     }
 
     /**
-     * @param string $id
-     *
-     * @throws \Couchbase\Exception
+     * @param string $ids
+     * @param $value
+     * @return MutationResult
      */
-    public function remove(string $id)
+    public function insert(string $id, $value): MutationResult
     {
-        try {
-            $this->bucket->remove($id);
-        } catch(CouchbaseException $exception) {
-            if ($exception->getCode() === COUCHBASE_KEY_ENOENT) {
-                // Document does not exist; No need to throw error.
-            } else {
-                throw $exception;
-            }
+        return $this->bucket->defaultCollection()->insert($id, $value);
+    }
+
+    /**
+     * @throws CouchbaseException
+     */
+    public function remove(string $id): void
+    {
+        $this->bucket->defaultCollection()->remove($id);
+    }
+
+    public function executeQuery(string $query, array $params = []): ?array
+    {
+        $options = new QueryOptions();
+        if (count($params) > 0) {
+            $options->namedParameters($params);
         }
+        $result = $this->cluster->query(
+            $query,
+            $options)
+            ->rows();
+
+        return $this->cleanResult($this->extractQueryResult($result));
     }
 
-    /**
-     * Input a query string and query parameters.
-     *
-     * @param string $query
-     * @param array $params
-     *
-     * @return array|null
-     */
-    public function executeQuery(string $query, array $params = [])
-    {
-        $query = N1qlQuery::fromString($query);
-        $query->namedParams($params);
-
-        $result = $this->bucket->query($query, static::RESULT_AS_ARRAY);
-
-        return $this->extractQueryResult($result);
-    }
-
-    /**
-     * Input a query string and query parameters, get single, or first result.
-     *
-     * @param string $query
-     * @param array $params
-     *
-     * @return mixed
-     */
-    public function executeQueryWithOneResult(string $query, array $params = [])
+    public function executeQueryWithOneResult(string $query, array $params = []): mixed
     {
         $result = $this->executeQuery($query, $params);
 
         return reset($result);
     }
 
-    /**
-     * @return \BowlOfSoup\CouchbaseAccessLayer\Builder\QueryBuilder
-     */
     public function createQueryBuilder(): QueryBuilder
     {
         return new QueryBuilder($this->bucketName);
     }
 
     /**
-     * Get result for a Query Builder, transforms it into a result object.
-     *
-     * @param \BowlOfSoup\CouchbaseAccessLayer\Builder\QueryBuilder $queryBuilder
-     *
      * @throws \BowlOfSoup\CouchbaseAccessLayer\Exception\CouchbaseQueryException
-     *
-     * @return \BowlOfSoup\CouchbaseAccessLayer\Model\Result
      */
     public function getResult(QueryBuilder $queryBuilder): Result
     {
         $queryResult = $this->getResultUnprocessed($queryBuilder);
 
-        $result = new Result($this->extractQueryResult($queryResult));
-        if (isset($queryResult->metrics)) {
-            // metrics key does not exist when no limit of offset are given in a N1ql query.
-            $result
-                ->setCount((int) $queryResult->metrics['resultCount'])
-                ->setTotalCount(isset($queryResult->metrics['sortCount']) ? (int) $queryResult->metrics['sortCount'] : (int) $queryResult->metrics['resultCount']);
-        } else {
-            $result
-                ->setCount(count($result))
-                ->setTotalCount(count($result));
-        }
+        $result = new Result($this->cleanResult($this->extractQueryResult($queryResult)));
+
+        $result
+            ->setCount(count($result))
+            ->setTotalCount(count($result));
 
         return $result;
     }
 
     /**
-     * Get result for a Query Builder, returns a consistent result.
-     *
-     * This method strips out the bucket name from the result set.
-     *
-     * @param \BowlOfSoup\CouchbaseAccessLayer\Builder\QueryBuilder $queryBuilder
-     *
      * @throws \BowlOfSoup\CouchbaseAccessLayer\Exception\CouchbaseQueryException
-     *
-     * @return array
      */
     public function getResultAsArray(QueryBuilder $queryBuilder): array
     {
@@ -195,35 +147,35 @@ class BucketRepository
         return $result->get();
     }
 
-    /**
-     * Returns actual result of a query unprocessed and inconsistent.
-     *
-     * Pass this Query Builder to BucketRepository->getResult() to get a consistent result.
-     *
-     * @param \BowlOfSoup\CouchbaseAccessLayer\Builder\QueryBuilder $queryBuilder
-     *
-     * @throws \BowlOfSoup\CouchbaseAccessLayer\Exception\CouchbaseQueryException
-     *
-     * @return object|array
-     */
-    public function getResultUnprocessed(QueryBuilder $queryBuilder)
+    private function cleanResult(array $result): array
     {
-        $queryString = $queryBuilder->getQuery();
+        $returnableResult = [];
 
-        $query = N1qlQuery::fromString($queryString);
-        $query->namedParams($queryBuilder->getParameters());
+        foreach($result[0] as $item) {
+            $returnableResult[] = $item[$this->bucket->name()];
+        }
 
-        return $this->bucket->query($query, static::RESULT_AS_ARRAY);
+        return $returnableResult;
     }
 
     /**
-     * @param mixed $rawQueryResult
-     *
-     * This strips out the bucket name from the result set and makes it consistent.
-     *
-     * @return array
+     * @throws \BowlOfSoup\CouchbaseAccessLayer\Exception\CouchbaseQueryException
      */
-    private function extractQueryResult($rawQueryResult): array
+    public function getResultUnprocessed(QueryBuilder $queryBuilder): ?array
+    {
+        $options = null;
+        if (false === empty($queryBuilder->getParameters())) {
+            $options = new QueryOptions();
+            $options->namedParameters($queryBuilder->getParameters());
+        }
+
+        return $this->cluster->query(
+                $queryBuilder->getQuery(),
+                $options)
+            ->rows();
+    }
+
+    private function extractQueryResult(mixed $rawQueryResult): array
     {
         if (null === $rawQueryResult) {
             return [];

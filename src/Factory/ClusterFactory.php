@@ -5,24 +5,18 @@ declare(strict_types=1);
 namespace BowlOfSoup\CouchbaseAccessLayer\Factory;
 
 use Couchbase\Cluster;
+use Couchbase\ClusterInterface;
+use Couchbase\ClusterOptions;
 use Couchbase\PasswordAuthenticator;
 
 class ClusterFactory
 {
-    /** @var string */
-    private $host;
+    private string $host;
 
-    /** @var string */
-    private $user;
+    private string $user;
 
-    /** @var string */
-    private $password;
+    private string $password;
 
-    /**
-     * @param string $host
-     * @param string $user
-     * @param string $password
-     */
     public function __construct(string $host, string $user, string $password)
     {
         $this->host = $host;
@@ -30,16 +24,12 @@ class ClusterFactory
         $this->password = $password;
     }
 
-    /**
-     * @return \Couchbase\Cluster
-     */
-    public function create(): \CouchbaseCluster
+    public function create(): ClusterInterface
     {
-        $authenticator = new PasswordAuthenticator();
-        $authenticator->username($this->user)->password($this->password);
+        $options = new ClusterOptions();
+        $options->credentials($this->user, $this->password);
 
-        $cluster = new Cluster('couchbase://' . $this->host);
-        $cluster->authenticate($authenticator);
+        $cluster = new Cluster('couchbase://' . $this->host, $options);
 
         return $cluster;
     }

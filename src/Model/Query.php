@@ -13,120 +13,75 @@ class Query
     const ORDER_DESC = 'DESC';
     const DISTINCT = true;
 
-    /** @var array */
-    private $select = [];
+    private array $select = [];
 
-    /** @var bool */
-    private $distinct = false;
+    private bool $selectRaw = false;
 
-    /** @var bool */
-    private $selectRaw = false;
+    private ?string $from = null;
 
-    /** @var string */
-    private $from;
+    private array $useKeys = [];
 
-    /** @var array */
-    private $useKeys;
+    private string $useIndex = '';
 
-    /** @var string */
-    private $useIndex;
+    private array $whereAnd = [];
 
-    /** @var array */
-    private $whereAnd = [];
+    private array $whereOr = [];
 
-    /** @var array */
-    private $whereOr = [];
+    private array $orderBy = [];
 
-    /** @var array */
-    private $orderBy = [];
+    private array $groupBy = [];
 
-    /** @var array */
-    private $groupBy = [];
+    private ?int $limit = null;
 
-    /** @var int */
-    private $limit;
+    private ?int $offset = null;
 
-    /** @var int */
-    private $offset;
+    private array $allowedOrderByDirections = ['ASC', 'DESC'];
 
-    /** @var array */
-    private $allowedOrderByDirections = ['ASC', 'DESC'];
-
-    /**
-     * @param string $select
-     * @param bool $distinct
-     */
     public function addSelect(string $select, bool $distinct = false)
     {
         $this->select[] = trim(sprintf('%s %s', true === $distinct ? 'DISTINCT' : '', $select));
     }
 
-    /**
-     * @param bool $selectRaw
-     */
-    public function setSelectRaw(bool $selectRaw)
+    public function setSelectRaw(bool $selectRaw): void
     {
         $this->selectRaw = $selectRaw;
     }
 
-    /**
-     * @param string $from
-     * @param string|null $alias
-     */
-    public function setFrom(string $from, $alias = null)
+    public function setFrom(string $from, ?string $alias = null): void
     {
         $from = "`{$from}`";
         $this->from = null !== $alias ? "{$from} {$alias}" : $from;
     }
 
     /**
-     * @param \BowlOfSoup\CouchbaseAccessLayer\Builder\QueryBuilder $queryBuilder
-     * @param string $alias
-     *
      * @throws \BowlOfSoup\CouchbaseAccessLayer\Exception\CouchbaseQueryException
      */
-    public function setFromWithSubQuery(QueryBuilder $queryBuilder, string $alias)
+    public function setFromWithSubQuery(QueryBuilder $queryBuilder, string $alias): void
     {
         $this->from = "({$queryBuilder->getQuery()}) {$alias}";
     }
 
-    /**
-     * @param string $key
-     */
-    public function addUseKey(string $key)
+    public function addUseKey(string $key): void
     {
         $this->useKeys[] = $key;
     }
 
-    /**
-     * @param string $index
-     */
-    public function setUseIndex(string $index)
+    public function setUseIndex(string $index): void
     {
         $this->useIndex = $index;
     }
 
-    /**
-     * @param string $where
-     */
-    public function addWhere(string $where)
+    public function addWhere(string $where): void
     {
         $this->whereAnd[] = $where;
     }
 
-    /**
-     * @param string $where
-     */
-    public function addWhereOr(string $where)
+    public function addWhereOr(string $where): void
     {
         $this->whereOr[] = $where;
     }
 
-    /**
-     * @param string $orderBy
-     * @param string|null $direction
-     */
-    public function addOrderBy(string $orderBy, string $direction = null)
+    public function addOrderBy(string $orderBy, ?string $direction = null): void
     {
         if (null === $direction || !in_array($direction, $this->allowedOrderByDirections)) {
             $direction = static::ORDER_ASC;
@@ -135,34 +90,23 @@ class Query
         $this->orderBy[$orderBy] = $direction;
     }
 
-    /**
-     * @param string $groupBy
-     */
-    public function addGroupBy(string $groupBy)
+    public function addGroupBy(string $groupBy): void
     {
         $this->groupBy[] = $groupBy;
     }
 
-    /**
-     * @param int $limit
-     */
-    public function setLimit(int $limit)
+    public function setLimit(int $limit): void
     {
         $this->limit = $limit;
     }
 
-    /**
-     * @param int $offset
-     */
-    public function setOffset(int $offset)
+    public function setOffset(int $offset): void
     {
         $this->offset = $offset;
     }
 
     /**
      * @throws \BowlOfSoup\CouchbaseAccessLayer\Exception\CouchbaseQueryException
-     *
-     * @return string
      */
     public function build(): string
     {
