@@ -211,9 +211,6 @@ class BucketRepository
         $returnableResult = [];
 
         foreach($result[0] as $item) {
-            if (!is_array($item)) {
-                var_dump($item);die();
-            }
             $returnableResult[] = $item[$this->bucket->name()];
         }
 
