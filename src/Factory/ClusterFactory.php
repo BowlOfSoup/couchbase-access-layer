@@ -11,20 +11,12 @@ use Couchbase\PasswordAuthenticator;
 
 class ClusterFactory
 {
-    /** @var string */
-    private $host;
+    private string $host;
 
-    /** @var string */
-    private $user;
+    private string $user;
 
-    /** @var string */
-    private $password;
+    private string $password;
 
-    /**
-     * @param string $host
-     * @param string $user
-     * @param string $password
-     */
     public function __construct(string $host, string $user, string $password)
     {
         $this->host = $host;
