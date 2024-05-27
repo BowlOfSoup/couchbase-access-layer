@@ -8,18 +8,11 @@ use BowlOfSoup\CouchbaseAccessLayer\Model\Query;
 
 class QueryBuilder
 {
-    const RESULT_AS_ARRAY = true;
+    private Query $query;
 
-    /** @var \BowlOfSoup\CouchbaseAccessLayer\Model\Query */
-    private $query;
+    private array $parameters = [];
 
-    /** @var array */
-    private $parameters = [];
-
-    /**
-     * @param string|null $bucketName
-     */
-    public function __construct(string $bucketName = null)
+    public function __construct(?string $bucketName = null)
     {
         $this->query = new Query();
         if (null !== $bucketName) {
@@ -27,12 +20,6 @@ class QueryBuilder
         }
     }
 
-    /**
-     * @param string $select
-     * @param bool $distinct
-     *
-     * @return \BowlOfSoup\CouchbaseAccessLayer\Builder\QueryBuilder
-     */
     public function select(string $select, bool $distinct = false): self
     {
         $this->query->addSelect($select, $distinct);
@@ -40,11 +27,6 @@ class QueryBuilder
         return $this;
     }
 
-    /**
-     * @param array $selects
-     *
-     * @return \BowlOfSoup\CouchbaseAccessLayer\Builder\QueryBuilder
-     */
     public function selectMultiple(array $selects): self
     {
         foreach ($selects as $select) {
@@ -54,9 +36,6 @@ class QueryBuilder
         return $this;
     }
 
-    /**
-     * @return \BowlOfSoup\CouchbaseAccessLayer\Builder\QueryBuilder
-     */
     public function selectRaw(): self
     {
         $this->query->setSelectRaw(true);
@@ -64,13 +43,7 @@ class QueryBuilder
         return $this;
     }
 
-    /**
-     * @param string $from
-     * @param string|null $alias
-     *
-     * @return \BowlOfSoup\CouchbaseAccessLayer\Builder\QueryBuilder
-     */
-    public function from(string $from, string $alias = null): self
+    public function from(string $from, ?string $alias = null): self
     {
         $this->query->setFrom($from, $alias);
 
@@ -80,12 +53,7 @@ class QueryBuilder
     /**
      * Because we can't get a parsed query (with parameters) the parameters for the sub query need to be on the 'master' query builder.
      *
-     * @param \BowlOfSoup\CouchbaseAccessLayer\Builder\QueryBuilder $queryBuilder
-     * @param string $alias
-     *
      * @throws \BowlOfSoup\CouchbaseAccessLayer\Exception\CouchbaseQueryException
-     *
-     * @return \BowlOfSoup\CouchbaseAccessLayer\Builder\QueryBuilder
      */
     public function fromSubQuery(QueryBuilder $queryBuilder, string $alias): self
     {
@@ -94,11 +62,6 @@ class QueryBuilder
         return $this;
     }
 
-    /**
-     * @param string $where
-     *
-     * @return \BowlOfSoup\CouchbaseAccessLayer\Builder\QueryBuilder
-     */
     public function where(string $where): self
     {
         $this->query->addWhere($where);
@@ -106,11 +69,6 @@ class QueryBuilder
         return $this;
     }
 
-    /**
-     * @param string $where
-     *
-     * @return \BowlOfSoup\CouchbaseAccessLayer\Builder\QueryBuilder
-     */
     public function whereOr(string $where): self
     {
         $this->query->addWhereOr($where);
@@ -118,24 +76,13 @@ class QueryBuilder
         return $this;
     }
 
-    /**
-     * @param string $orderBy
-     * @param string|null $direction
-     *
-     * @return \BowlOfSoup\CouchbaseAccessLayer\Builder\QueryBuilder
-     */
-    public function orderBy(string $orderBy, $direction = null): self
+    public function orderBy(string $orderBy, ?string $direction = null): self
     {
         $this->query->addOrderBy($orderBy, $direction);
 
         return $this;
     }
 
-    /**
-     * @param string $groupBy
-     *
-     * @return \BowlOfSoup\CouchbaseAccessLayer\Builder\QueryBuilder
-     */
     public function groupBy(string $groupBy): self
     {
         $this->query->addGroupBy($groupBy);
@@ -145,8 +92,6 @@ class QueryBuilder
 
     /**
      * @param string|int $limit
-     *
-     * @return \BowlOfSoup\CouchbaseAccessLayer\Builder\QueryBuilder
      */
     public function limit($limit): self
     {
@@ -157,8 +102,6 @@ class QueryBuilder
 
     /**
      * @param string|int $offset
-     *
-     * @return \BowlOfSoup\CouchbaseAccessLayer\Builder\QueryBuilder
      */
     public function offset($offset): self
     {
@@ -167,11 +110,6 @@ class QueryBuilder
         return $this;
     }
 
-    /**
-     * @param string $index
-     *
-     * @return \BowlOfSoup\CouchbaseAccessLayer\Builder\QueryBuilder
-     */
     public function useIndex(string $index): self
     {
         $this->query->setUseIndex($index);
@@ -179,11 +117,6 @@ class QueryBuilder
         return $this;
     }
 
-    /**
-     * @param string $key
-     *
-     * @return \BowlOfSoup\CouchbaseAccessLayer\Builder\QueryBuilder
-     */
     public function useKey(string $key): self
     {
         $this->query->addUseKey($key);
@@ -191,11 +124,6 @@ class QueryBuilder
         return $this;
     }
 
-    /**
-     * @param array $keys
-     *
-     * @return \BowlOfSoup\CouchbaseAccessLayer\Builder\QueryBuilder
-     */
     public function useKeys(array $keys): self
     {
         foreach ($keys as $key) {
@@ -208,8 +136,6 @@ class QueryBuilder
     /**
      * @param string $parameter
      * @param string|int $content
-     *
-     * @return \BowlOfSoup\CouchbaseAccessLayer\Builder\QueryBuilder
      */
     public function setParameter(string $parameter, $content): self
     {
@@ -218,11 +144,6 @@ class QueryBuilder
         return $this;
     }
 
-    /**
-     * @param array $parameters
-     *
-     * @return \BowlOfSoup\CouchbaseAccessLayer\Builder\QueryBuilder
-     */
     public function setParameters(array $parameters): self
     {
         $this->parameters = array_merge($this->parameters, $parameters);
@@ -230,9 +151,6 @@ class QueryBuilder
         return $this;
     }
 
-    /**
-     * @return array
-     */
     public function getParameters(): array
     {
         return $this->parameters;
@@ -240,8 +158,6 @@ class QueryBuilder
 
     /**
      * @throws \BowlOfSoup\CouchbaseAccessLayer\Exception\CouchbaseQueryException
-     *
-     * @return string
      */
     public function getQuery(): string
     {
