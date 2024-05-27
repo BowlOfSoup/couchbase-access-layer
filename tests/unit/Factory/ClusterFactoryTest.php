@@ -17,7 +17,7 @@ class ClusterFactoryTest extends CouchbaseTestCase
     public function testClusterFactoryCreatesACluster(): void
     {
         $parts = explode(',', $this->testConnectionString);
-        $factory = new ClusterFactory($parts[1], $this->testAdminUser, $this->testAdminPassword);
+        $factory = new ClusterFactory($parts[0], $this->testAdminUser, $this->testAdminPassword);
         $connection = $factory->create();
 
         $this->assertInstanceOf(Cluster::class, $connection);

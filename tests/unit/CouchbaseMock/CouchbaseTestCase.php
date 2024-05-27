@@ -4,45 +4,30 @@ declare(strict_types=1);
 
 namespace BowlOfSoup\CouchbaseAccessLayer\Test\unit\CouchbaseMock;
 
-use BowlOfSoup\CouchbaseAccessLayer\Test\unit\CouchbaseMock\CouchbaseMock;
 use Couchbase\Bucket;
-use Couchbase\ClassicAuthenticator;
 use Couchbase\Cluster;
 use Couchbase\ClusterOptions;
 use Couchbase\PasswordAuthenticator;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Extending this abstract will create a dummy Couchbase instance that behaves as an actual Couchbase instance.
- * You're able to get a bucket and do actions like upsert and get. N1ql queries and indexes are not supported!
- *
- * Downloads a 'CouchbaseMock.jar' (~3.8 MB) onto your system.
+ * Extending this abstract will give access to the Couchbase instance in the Docker setup
  */
 abstract class CouchbaseTestCase extends TestCase
 {
-    /** @var string */
-    protected $testConnectionString;
+    protected string $testConnectionString = 'couchbase';
 
-    /** @var \Couchbase\PasswordAuthenticator */
-    protected $testAuthenticator;
+    protected PasswordAuthenticator $testAuthenticator;
 
-    /** @var string */
-    protected $testBucket;
+    protected string $testBucket;
 
-    /** @var string */
-    protected $testAdminUser;
+    protected string $testAdminUser;
 
-    /** @var string */
-    protected $testAdminPassword;
+    protected string $testAdminPassword;
 
-    /** @var string */
-    protected $testUser;
+    protected string $testUser;
 
-    /** @var string */
-    protected $testPassword;
-
-    /** @var \BowlOfSoup\CouchbaseAccessLayer\Test\unit\CouchbaseMock\CouchbaseMock */
-    protected $mock = null;
+    protected string $testPassword;
 
     /**
      * @throws \Exception
@@ -50,12 +35,6 @@ abstract class CouchbaseTestCase extends TestCase
     protected function setUp(): void
     {
         ini_set('couchbase.log_level', 'debug');
-        
-        $this->mock = new CouchbaseMock();
-        $this->mock->start();
-        $this->mock->setCccp(true);
-
-        $this->testConnectionString = $this->mock->connectionString();
 
         $this->testBucket = 'default';
         $this->testAdminUser = 'Administrator';
@@ -66,35 +45,13 @@ abstract class CouchbaseTestCase extends TestCase
         $this->testAuthenticator = new PasswordAuthenticator($this->testUser, $this->testPassword);
     }
 
-    protected function tearDown(): void
-    {
-        $this->mock->stop();
-    }
-
-    /**
-     * @return float
-     */
-    protected function serverVersion()
-    {
-        $version = getenv('CB_VERSION');
-        if ($version === false) {
-            $version = '4.6';
-        }
-
-        return floatval($version);
-    }
-
-    /**
-     * @return \Couchbase\Bucket
-     */
     protected function getDefaultBucket(): Bucket
     {
         $options = new ClusterOptions();
-        $options->credentials($this->testAdminUser, $this->testAdminPassword);
+        $options->credentials($this->testUser, $this->testPassword);
 
         $cluster = new Cluster($this->testConnectionString, $options);
-        $bucket = $cluster->bucket($this->testBucket);
 
-        return $bucket;
+        return $cluster->bucket($this->testBucket);
     }
 }
