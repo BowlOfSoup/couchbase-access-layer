@@ -6,48 +6,30 @@ namespace BowlOfSoup\CouchbaseAccessLayer\Model;
 
 class Result implements \Iterator, \ArrayAccess, \Countable, \JsonSerializable
 {
-    /** @var array */
-    private $container;
+    private array $container;
 
-    /** @var int */
-    private $count;
+    private ?int $count = null;
 
-    /** @var int */
-    private $totalCount;
+    private ?int $totalCount = null;
 
-    /** @var int */
-    private $position = 0;
+    private int $position = 0;
 
-    /**
-     * @param array $result
-     */
     public function __construct(array $result)
     {
         $this->container = $result;
         $this->position = 0;
     }
 
-    /**
-     * @return array
-     */
     public function get(): array
     {
         return $this->container;
     }
 
-    /**
-     * @return int|null
-     */
     public function getCount(): ?int
     {
         return $this->count;
     }
 
-    /**
-     * @param int $count
-     *
-     * @return \BowlOfSoup\CouchbaseAccessLayer\Model\Result
-     */
     public function setCount(int $count): Result
     {
         $this->count = $count;
@@ -55,19 +37,11 @@ class Result implements \Iterator, \ArrayAccess, \Countable, \JsonSerializable
         return $this;
     }
 
-    /**
-     * @return int|null
-     */
-    public function getTotalCount()
+    public function getTotalCount(): ?int
     {
         return $this->totalCount;
     }
 
-    /**
-     * @param int $totalCount
-     *
-     * @return \BowlOfSoup\CouchbaseAccessLayer\Model\Result
-     */
     public function setTotalCount(int $totalCount): Result
     {
         $this->totalCount = $totalCount;
@@ -100,9 +74,6 @@ class Result implements \Iterator, \ArrayAccess, \Countable, \JsonSerializable
         return isset($this->container[$this->position]);
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function offsetSet($offset, $value): void
     {
         if (is_null($offset)) {
@@ -112,25 +83,16 @@ class Result implements \Iterator, \ArrayAccess, \Countable, \JsonSerializable
         }
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function offsetExists($offset): bool
     {
         return isset($this->container[$offset]);
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function offsetUnset($offset): void
     {
         unset($this->container[$offset]);
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function offsetGet($offset): mixed
     {
         return isset($this->container[$offset]) ? $this->container[$offset] : null;
@@ -146,10 +108,7 @@ class Result implements \Iterator, \ArrayAccess, \Countable, \JsonSerializable
         return count($this->container);
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    public function jsonSerialize(): mixed
+    public function jsonSerialize(): array
     {
         return $this->container;
     }
