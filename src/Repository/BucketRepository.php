@@ -152,7 +152,11 @@ class BucketRepository
         $returnableResult = [];
 
         foreach($result[0] as $item) {
-            $returnableResult[] = $item[$this->bucket->name()];
+            if (isset($item[$this->bucket->name()])) {
+                $returnableResult[] = $item[$this->bucket->name()];
+            } else {
+                $returnableResult[] = $item;
+            }
         }
 
         return $returnableResult;
